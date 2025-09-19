@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transliteration Tool | Bharat Script</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@indic-transliteration/sanscript"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F97316;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #F97316;
+            color: #F97316;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white bg-opacity-90 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">BharatScript</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="index.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-900 bg-gray-100">Transliterate</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i data-feather="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center mb-8" data-aos="fade-up">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                <span class="gradient-text">Script Transliterator</span>
+            </h1>
+            <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                Convert text between different Indian scripts instantly
+            </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-8" data-aos="fade-up" data-aos-delay="100">
+            <nav class="-mb-px flex space-x-8">
+                <a href="#" id="text-tab" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Text Input
+                </a>
+                <a href="#" id="image-tab"
+                    class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Image OCR
+                </a>
+            </nav>
+        </div>
+
+        <!-- Transliteration Tool -->
+        <div id="text-input-section" class="bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up"
+            data-aos-delay="200">
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Input Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Input</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Source:</label>
+                                <select id="source-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                    <option value="gujarati">Gujarati</option>
+                                    <option value="gurmukhi">Punjabi (Gurmukhi)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <textarea id="input-text" rows="12"
+                            class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3"
+                            placeholder="Type or paste your text here..."></textarea>
+                        <div class="mt-2 flex justify-between">
+                            <div class="flex items-center">
+                                <span class="text-xs text-gray-500">Characters: <span id="char-count">0</span></span>
+                            </div>
+                            <button id="speech-input-btn" class="text-sm text-orange-600 hover:text-orange-800">
+                                <i data-feather="mic" class="w-4 h-4 inline mr-1"></i> Speech Input
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-909">Output</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Target:</label>
+                                <select id="target-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="itrans">English (Latin)</option>
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="output-text"
+                            class="shadow-sm block w-full sm:text-sm border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Transliterated text will appear here...</p>
+                        </div>
+                        <div class="mt-2 flex justify-end space-x-3">
+                            <button id="copy-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="copy" class="w-4 h-4 mr-1"></i> Copy
+                            </button>
+                            <button id="speak-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="volume-2" class="w-4 h-4 mr-1"></i> Speak
+                            </button>
+                            <button id="download-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="download" class="w-4 h-4 mr-1"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-center">
+                    <button id="transliterate-btn"
+                        class="btn-gradient text-white px-8 py-3 rounded-md text-lg font-medium inline-flex items-center">
+                        <i data-feather="repeat" class="w-5 h-5 mr-2"></i> Transliterate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image OCR Section (Hidden by default) -->
+        <div id="image-ocr-section" class="bg-white shadow rounded-lg overflow-hidden mt-8 hidden" data-aos="fade-up">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Image with Text</h3>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <div class="flex justify-center">
+                        <i data-feather="image" class="w-12 h-12 text-gray-400"></i>
+                    </div>
+                    <div class="mt-4 flex text-sm text-gray-600">
+                        <label
+                            class="file-upload relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none">
+                            <span>Upload an image file</span>
+                            <input type="file" id="ocr-image-upload" class="file-upload-input" accept="image/*">
+                        </label>
+                        <p class="pl-1">or drag and drop</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        PNG, JPG, GIF up to 5MB
+                    </p>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Original Image Preview -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Original Image</h4>
+                        <div id="image-preview"
+                            class="border border-gray-200 rounded-md p-4 flex items-center justify-center bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Image preview will appear here...</p>
+                        </div>
+                    </div>
+
+                    <!-- Extracted Text -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-sm font-medium text-gray-700">Extracted Text</h4>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-xs font-medium text-gray-700">Script:</label>
+                                <select id="ocr-source-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-xs">
+                                    <option value="auto">Auto Detect</option>
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="ocr-extracted-text"
+                            class="border border-gray-200 rounded-md p-3 bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Extracted text will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OCR Processing Controls -->
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button id="ocr-cancel-btn"
+                        class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        Cancel
+                    </button>
+                    <button id="ocr-process-btn"
+                        class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none">
+                        <div class="flex items-center">
+                            <span id="ocr-btn-text">Process Image</span>
+                            <div id="ocr-loader" class="loader hidden ml-2"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script Information -->
+        <div class="mt-8 bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">About Indian Scripts</h3>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Source Script: <span
+                                id="source-script-name">Devanagari</span></h4>
+                        <p class="text-sm text-gray-500">
+                            Devanagari is an abugida alphabet of India and Nepal. It is written from left to right, has
+                            a strong preference for symmetrical rounded shapes within squared outlines, and is
+                            recognizable by a horizontal line that runs along the top of full letters.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Target Script: <span
+                                id="target-script-name">Latin (English)</span></h4>
+                        <p class="text-sm text-gray-500">
+                            The Latin script is the basis of the international phonetic alphabet. Our transliteration
+                            follows standard academic conventions for representing Indian scripts in Latin characters,
+                            preserving pronunciation as closely as possible.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                    <div class="flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-white">BharatScript</span>
+                    </div>
+                    <p class="text-gray-300 text-base">
+                        Making Indian scripts accessible to everyone through technology.
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Navigation
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="index.html" class="text-base text-gray-400 hover:text-white">
+                                        Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Transliteration Tool
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        About
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-12 md:mt-0">
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Support
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Documentation
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Contact
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Acknowledgments
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        AICTE
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        IKS
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 border-t border-gray-700 pt-8">
+                <p class="text-base text-gray-400 text-center">
+                    &copy; 2023 Bharat Script Transliterator. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // Character count for input text
+        document.getElementById('input-text').addEventListener('input', function () {
+            document.getElementById('char-count').textContent = this.value.length;
+        });
+
+        // Copy button functionality
+        document.getElementById('copy-btn').addEventListener('click', function () {
+            const outputText = document.getElementById('output-text').textContent;
+            navigator.clipboard.writeText(outputText).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i data-feather="check" class="w-4 h-4 mr-1"></i> Copied!';
+                feather.replace();
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    feather.replace();
+                }, 2000);
+            });
+        });
+
+        // Speak button functionality with language support
+        document.getElementById('speak-btn').addEventListener('click', function () {
+            const outputText = document.getElementById('output-text').textContent;
+            const targetScript = document.getElementById('target-script').value;
+
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(outputText);
+
+                // Set language based on target script
+                const langMap = {
+                    'devanagari': 'hi-IN',
+                    'bengali': 'bn-IN',
+                    'tamil': 'ta-IN',
+                    'telugu': 'te-IN',
+                    'kannada': 'kn-IN',
+                    'malayalam': 'ml-IN',
+                    'gujarati': 'gu-IN',
+                    'gurmukhi': 'pa-IN',
+                    'itrans': 'en-IN'
+                };
+
+                utterance.lang = langMap[targetScript] || 'en-IN';
+
+                // Try to set a voice that supports the language
+                const voices = speechSynthesis.getVoices();
+                const preferredVoice = voices.find(voice =>
+                    voice.lang === utterance.lang && voice.localService === true
+                );
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('Text-to-speech is not supported in your browser');
+            }
+        });
+
+        // Download button functionality
+        document.getElementById('download-btn').addEventListener('click', function () {
+            const outputText = document.getElementById('output-text').textContent;
+            const blob = new Blob([outputText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'transliterated-text.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Speech input functionality with language support
+        document.getElementById('speech-input-btn').addEventListener('click', function () {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+                // Set language based on source script
+                const sourceScript = document.getElementById('source-script').value;
+                const langMap = {
+                    'devanagari': 'hi-IN',
+                    'bengali': 'bn-IN',
+                    'tamil': 'ta-IN',
+                    'telugu': 'te-IN',
+                    'kannada': 'kn-IN',
+                    'malayalam': 'ml-IN',
+                    'gujarati': 'gu-IN',
+                    'gurmukhi': 'pa-IN'
+                };
+
+                recognition.lang = langMap[sourceScript] || 'en-IN';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onresult = function (event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('input-text').value = transcript;
+                    document.getElementById('char-count').textContent = transcript.length;
+                };
+
+                recognition.onerror = function (event) {
+                    console.error('Speech recognition error', event.error);
+                    if (event.error === 'not-allowed') {
+                        alert('Microphone access is not allowed. Please enable microphone permissions in your browser settings.');
+                    } else {
+                        alert('Error with speech recognition: ' + event.error);
+                    }
+                };
+
+                recognition.start();
+            } else {
+                alert('Speech recognition is not supported in your browser');
+            }
+        });
+
+        // Transliterate button functionality
+        document.getElementById('transliterate-btn').addEventListener('click', function () {
+            const inputText = document.getElementById('input-text').value.trim();
+            const sourceScript = document.getElementById('source-script').value;
+            const targetScript = document.getElementById('target-script').value;
+
+            if (!inputText) {
+                alert('Please enter some text to transliterate');
+                return;
+            }
+
+            // Update script names in info section
+            document.getElementById('source-script-name').textContent = getScriptName(sourceScript);
+            document.getElementById('target-script-name').textContent = getScriptName(targetScript);
+
+            // Show loading state
+            this.innerHTML = '<i data-feather="loader" class="w-5 h-5 mr-2 animate-spin"></i> Processing...';
+            feather.replace();
+
+            try {
+                // Use Sanscript for transliteration
+                const result = Sanscript.t(inputText, sourceScript, targetScript);
+
+                document.getElementById('output-text').innerHTML =
+                    `<p class="text-gray-800">${result}</p>`;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('output-text').innerHTML =
+                    `<p class="text-red-600">Error: ${error.message}</p>`;
+            } finally {
+                this.innerHTML = '<i data-feather="repeat" class="w-5 h-5 mr-2"></i> Transliterate';
+                feather.replace();
+            }
+        });
+
+        // Tab switching
+        document.getElementById('text-tab').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('text-tab').classList.add('tab-active');
+            document.getElementById('image-tab').classList.remove('tab-active');
+            document.getElementById('text-input-section').classList.remove('hidden');
+            document.getElementById('image-ocr-section').classList.add('hidden');
+        });
+
+        document.getElementById('image-tab').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('image-tab').classList.add('tab-active');
+            document.getElementById('text-tab').classList.remove('tab-active');
+            document.getElementById('image-ocr-section').classList.remove('hidden');
+            document.getElementById('text-input-section').classList.add('hidden');
+        });
+
+        // Image upload preview
+        document.getElementById('ocr-image-upload').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.getElementById('image-preview');
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Preview" class="max-h-48 mx-auto rounded">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // OCR processing button
+        document.getElementById('ocr-process-btn').addEventListener('click', async function () {
+            const fileInput = document.getElementById('ocr-image-upload');
+            const sourceScript = document.getElementById('ocr-source-script').value;
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please upload an image first');
+                return;
+            }
+
+            const loader = document.getElementById('ocr-loader');
+            const btnText = document.getElementById('ocr-btn-text');
+            const extractedTextDiv = document.getElementById('ocr-extracted-text');
+
+            btnText.textContent = 'Processing';
+            loader.classList.remove('hidden');
+
+            try {
+                // In a real implementation, this would upload the image to your backend for OCR processing
+                // For demo purposes, we'll simulate an API call with more realistic text samples
+                const response = await simulateOcrApiCall(fileInput.files[0], sourceScript);
+
+                if (response.success) {
+                    extractedTextDiv.innerHTML = `<p class="text-gray-800">${response.extractedText}</p>`;
+
+                    // Auto-fill the input text with OCR results
+                    document.getElementById('input-text').value = response.extractedText;
+                    document.getElementById('char-count').textContent = response.extractedText.length;
+
+                    // Auto-select the script if not auto-detect
+                    if (sourceScript !== 'auto') {
+                        document.getElementById('source-script').value = sourceScript;
+                    }
+                } else {
+                    throw new Error(response.message || 'OCR processing failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                extractedTextDiv.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+            } finally {
+                btnText.textContent = 'Process Image';
+                loader.classList.add('hidden');
+            }
+        });
+
+        // Cancel OCR button
+        document.getElementById('ocr-cancel-btn').addEventListener('click', function () {
+            document.getElementById('ocr-image-upload').value = '';
+            document.getElementById('image-preview').innerHTML = '<p class="text-gray-400 italic">Image preview will appear here...</p>';
+            document.getElementById('ocr-extracted-text').innerHTML = '<p class="text-gray-400 italic">Extracted text will appear here...</p>';
+        });
+
+        // Helper function to simulate OCR API call with realistic text samples
+        async function simulateOcrApiCall(file, sourceScript) {
+            // In a real implementation, this would make an actual API call to your backend
+            // For demo purposes, we'll return realistic sample text based on the script
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const sampleTexts = {
+                        'devanagari': 'भारत एक विशाल और विविधतापूर्ण देश है जो अपनी समृद्ध सांस्कृतिक विरासत के लिए जाना जाता है।',
+                        'bengali': 'ভারত একটি বিশাল এবং বৈচিত্র্যময় দেশ যা তার সমৃদ্ধ সাংস্কৃতিক heritage জন্য পরিচিত।',
+                        'tamil': 'இந்தியா ஒரு பரந்த மற்றும் பல்வேறு நாடாகும், இது அதன் பண்பாட்டு மரபுக்காக அறியப்படுகிறது।',
+                        'auto': 'This text was extracted from your image. In a real implementation, OCR would detect the script and extract the actual text.'
+                    };
+
+                    const extractedText = sampleTexts[sourceScript] || sampleTexts['auto'];
+
+                    resolve({
+                        success: true,
+                        extractedText: extractedText
+                    });
+                }, 2000);
+            });
+        }
+
+        // Helper function to get script name from code
+        function getScriptName(code) {
+            const scripts = {
+                'devanagari': 'Hindi (Devanagari)',
+                'bengali': 'Bengali',
+                'tamil': 'Tamil',
+                'telugu': 'Telugu',
+                'kannada': 'Kannada',
+                'malayalam': 'Malayalam',
+                'gujarati': 'Gujarati',
+                'gurmukhi': 'Punjabi (Gurmukhi)',
+                'itrans': 'English (Latin)',
+                'auto': 'Auto Detect'
+            };
+            return scripts[code] || code;
+        }
+
+        // Update script names when dropdowns change
+        document.getElementById('source-script').addEventListener('change', function () {
+            document.getElementById('source-script-name').textContent = getScriptName(this.value);
+        });
+
+        document.getElementById('target-script').addEventListener('change', function () {
+            document.getElementById('target-script-name').textContent = getScriptName(this.value);
+        });
+    </script>
+</body>
+
+</html>

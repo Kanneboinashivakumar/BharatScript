@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transliteration Tool | Bharat Script</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@indic-transliteration/sanscript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F97316;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #F97316;
+            color: #F97316;
+            font-weight: 600;
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .language-option span {
+            margin-left: 8px;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white bg-opacity-90 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">BharatScript</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="index.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-900 bg-gray-100">Transliterate</a>
+                        <a href="index.html#about"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                        <a href="contact.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Contact</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" id="mobile-menu-button"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i data-feather="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu, hidden by default -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                <a href="#"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-100">Transliterate</a>
+                <a href="index.html#about"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                <a href="contact.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center mb-8" data-aos="fade-up">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                <span class="gradient-text">Script Transliterator</span>
+            </h1>
+            <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                Convert text between different Indian scripts instantly
+            </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-8" data-aos="fade-up" data-aos-delay="100">
+            <nav class="-mb-px flex space-x-8">
+                <a href="#" id="text-tab" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Text Input
+                </a>
+                <a href="#" id="image-tab"
+                    class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Image OCR
+                </a>
+            </nav>
+        </div>
+
+        <!-- Transliteration Tool -->
+        <div id="text-input-section" class="bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up"
+            data-aos-delay="200">
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Input Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Input</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Source:</label>
+                                <select id="source-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                    <option value="gujarati">Gujarati</option>
+                                    <option value="gurmukhi">Punjabi (Gurmukhi)</option>
+                                    <option value="oriya">Odia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <textarea id="input-text" rows="12"
+                            class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3"
+                            placeholder="Type or paste your text here..."></textarea>
+                        <div class="mt-2 flex justify-between">
+                            <div class="flex items-center">
+                                <span class="text-xs text-gray-500">Characters: <span id="char-count">0</span></span>
+                            </div>
+                            <button id="speech-input-btn" class="text-sm text-orange-600 hover:text-orange-800">
+                                <i data-feather="mic" class="w-4 h-4 inline mr-1"></i> Speech Input
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Output</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Target:</label>
+                                <select id="target-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="itrans">English (Latin)</option>
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="output-text"
+                            class="shadow-sm block w-full sm:text-sm border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Transliterated text will appear here...</p>
+                        </div>
+                        <div class="mt-2 flex justify-end space-x-3">
+                            <button id="copy-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="copy" class="w-4 h-4 mr-1"></i> Copy
+                            </button>
+                            <button id="speak-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="volume-2" class="w-4 h-4 mr-1"></i> Speak
+                            </button>
+                            <button id="download-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="download" class="w-4 h-4 mr-1"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-center">
+                    <button id="transliterate-btn"
+                        class="btn-gradient text-white px-8 py-3 rounded-md text-lg font-medium inline-flex items-center">
+                        <i data-feather="repeat" class="w-5 h-5 mr-2"></i> Transliterate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image OCR Section (Hidden by default) -->
+        <div id="image-ocr-section" class="bg-white shadow rounded-lg overflow-hidden mt-8 hidden" data-aos="fade-up">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Image with Text</h3>
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <div class="flex justify-center">
+                        <i data-feather="image" class="w-12 w-12 text-gray-400"></i>
+                    </div>
+                    <div class="mt-4 flex text-sm text-gray-600">
+                        <label
+                            class="file-upload relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none">
+                            <span>Upload an image file</span>
+                            <input type="file" id="ocr-image-upload" class="file-upload-input" accept="image/*">
+                        </label>
+                        <p class="pl-1">or drag and drop</p>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        PNG, JPG, GIF up to 10MB
+                    </p>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Original Image Preview -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Original Image</h4>
+                        <div id="image-preview"
+                            class="border border-gray-200 rounded-md p-4 flex items-center justify-center bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Image preview will appear here...</p>
+                        </div>
+                    </div>
+
+                    <!-- Extracted Text -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-sm font-medium text-gray-700">Extracted Text</h4>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-xs font-medium text-gray-700">Detected Language:</label>
+                                <span id="detected-language"
+                                    class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Auto-detecting...</span>
+                            </div>
+                        </div>
+                        <div id="ocr-extracted-text"
+                            class="border border-gray-200 rounded-md p-3 bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Extracted text will appear here...</p>
+                        </div>
+                        <div class="mt-2 flex justify-end">
+                            <button id="ocr-copy-btn" class="text-xs text-orange-600 hover:text-orange-800 mr-3">
+                                <i data-feather="copy" class="w-3 h-3 inline mr-1"></i> Copy Text
+                            </button>
+                            <button id="ocr-use-btn" class="text-xs text-orange-600 hover:text-orange-800">
+                                <i data-feather="arrow-right" class="w-3 h-3 inline mr-1"></i> Use for Transliteration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OCR Processing Controls -->
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button id="ocr-cancel-btn"
+                        class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        Clear
+                    </button>
+                    <button id="ocr-process-btn"
+                        class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none">
+                        <div class="flex items-center">
+                            <span id="ocr-btn-text">Extract Text</span>
+                            <div id="ocr-loader" class="loader hidden ml-2"></div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- OCR Progress -->
+                <div id="ocr-progress" class="mt-4 hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="ocr-progress-bar" class="bg-orange-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span id="ocr-progress-status">Initializing...</span>
+                        <span id="ocr-progress-percentage">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script Information -->
+        <div class="mt-8 bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">About Indian Scripts</h3>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Source Script: <span
+                                id="source-script-name">Devanagari</span></h4>
+                        <p class="text-sm text-gray-500">
+                            Devanagari is an abugida alphabet of India and Nepal. It is written from left to right, has
+                            a strong preference for symmetrical rounded shapes within squared outlines, and is
+                            recognizable by a horizontal line that runs along the top of full letters.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Target Script: <span
+                                id="target-script-name">Latin (English)</span></h4>
+                        <p class="text-sm text-gray-500">
+                            The Latin script is the basis of the international phonetic alphabet. Our transliteration
+                            follows standard academic conventions for representing Indian scripts in Latin characters,
+                            preserving pronunciation as closely as possible.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- About Section -->
+    <section id="about" class="relative z-10 py-12 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center" data-aos="fade-up">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    About <span class="gradient-text">BharatScript</span>
+                </h2>
+                <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                    Making Indian scripts accessible through technology
+                </p>
+            </div>
+
+            <div class="mt-12 grid gap-8 md:grid-cols-2" data-aos="fade-up" data-aos-delay="100">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Our Mission</h3>
+                    <p class="text-gray-500">
+                        BharatScript is dedicated to breaking down language barriers by providing accurate and
+                        accessible transliteration tools for all major Indian scripts. Our mission is to make
+                        Indian languages more accessible to everyone, regardless of their linguistic background.
+                    </p>
+                    <p class="text-gray-500 mt-4">
+                        We believe that language should never be a barrier to communication, education, or
+                        cultural exchange. Our tools are designed to help travelers, students, researchers,
+                        and anyone interested in Indian languages and scripts.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Technology</h3>
+                    <p class="text-gray-500">
+                        Our platform uses advanced algorithms and machine learning techniques to provide
+                        accurate transliteration between scripts. We've incorporated the Sanscript library
+                        for precise script conversion and Tesseract.js for OCR capabilities.
+                    </p>
+                    <div class="mt-6 flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-12 w-12 rounded-md bg-orange-500 text-white">
+                                <i data-feather="code"></i>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="text-md font-medium text-gray-900">Open Source</h4>
+                            <p class="text-sm text-gray-500">
+                                We believe in open collaboration and transparency.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12" data-aos="fade-up" data-aos-delay="200">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Supported Scripts</h3>
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Devanagari</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Bengali</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Tamil</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Telugu</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Kannada</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Malayalam</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Gujarati</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i data-feather="check" class="h-5 w-5 text-green-500"></i>
+                        <span class="ml-2 text-gray-700">Gurmukhi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 bg-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                    <div class="flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-white">BharatScript</span>
+                    </div>
+                    <p class="text-gray-300 text-base">
+                        Making Indian scripts accessible to everyone through technology.
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i data-feather="github"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i data-feather="twitter"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="transliterate.html"
+                                        class="text-base text-gray-300 hover:text-white">Transliterate</a>
+                                </li>
+                                <li>
+                                    <a href="transliterate.html#ocr-section"
+                                        class="text-base text-gray-300 hover:text-white">OCR</a>
+                                </li>
+                                <li>
+                                    <a href="transliterate.html"
+                                        class="text-base text-gray-300 hover:text-white">Text-to-Speech</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-12 md:mt-0">
+                            <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Company</h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#about" class="text-base text-gray-300 hover:text-white">About</a>
+                                </li>
+                                <li>
+                                    <a href="contact.html" class="text-base text-gray-300 hover:text-white">Contact</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-300 hover:text-white">Careers</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Technology</h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <span class="text-base text-gray-400">Sanscript.js</span>
+                                </li>
+                                <li>
+                                    <span class="text-base text-gray-400">Tesseract.js</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-700 pt-8">
+                <p class="text-base text-gray-400 xl:text-center">&copy; 2025 BharatScript. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // Mobile menu functionality
+        document.getElementById('mobile-menu-button').addEventListener('click', function () {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Character count for input text
+        document.getElementById('input-text').addEventListener('input', function () {
+            document.getElementById('char-count').textContent = this.value.length;
+        });
+
+        // Copy button functionality
+        document.getElementById('copy-btn').addEventListener('click', function () {
+            const outputText = document.getElementById('output-text').textContent;
+            if (!outputText || outputText.includes('Transliterated text will appear here')) {
+                alert('No text to copy. Please transliterate some text first.');
+                return;
+            }
+
+            navigator.clipboard.writeText(outputText).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i data-feather="check" class="w-4 h-4 mr-1"></i> Copied!';
+                feather.replace();
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    feather.replace();
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy text. Please try again.');
+            });
+        });
+
+        // Enhanced Speak button functionality with improved pronunciation
+        document.getElementById('speak-btn').addEventListener('click', function () {
+            const outputText = document.getElementById('output-text').textContent;
+            const targetScript = document.getElementById('target-script').value;
+
+            if (!outputText || outputText.includes('Transliterated text will appear here')) {
+                alert('No text to speak. Please transliterate some text first.');
+                return;
+            }
+
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(outputText);
+
+                // Enhanced language mapping for better pronunciation
+                const langMap = {
+                    'devanagari': 'hi-IN',
+                    'bengali': 'bn-IN',
+                    'tamil': 'ta-IN',
+                    'telugu': 'te-IN',
+                    'kannada': 'kn-IN',
+                    'malayalam': 'ml-IN',
+                    'gujarati': 'gu-IN',
+                    'gurmukhi': 'pa-IN',
+                    'itrans': 'en-US'
+                };
+
+                utterance.lang = langMap[targetScript] || 'en-US';
+                utterance.rate = 0.8; // Slightly slower for better clarity
+                utterance.pitch = 1.0;
+
+                // Try to find the best voice for the language
+                const voices = speechSynthesis.getVoices();
+                let preferredVoice = voices.find(voice =>
+                    voice.lang === utterance.lang && voice.localService === true
+                );
+
+                // If no local voice found, try to find any voice with the language
+                if (!preferredVoice) {
+                    preferredVoice = voices.find(voice =>
+                        voice.lang === utterance.lang
+                    );
+                }
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+
+                speechSynthesis.speak(utterance);
+            } else {
+                alert('Text-to-speech is not supported in your browser');
+            }
+        });
+
+        // Download button functionality
+        document.getElementById('download-btn').addEventListener('click', function () {
+            const outputText = document.getElementById('output-text').textContent;
+
+            if (!outputText || outputText.includes('Transliterated text will appear here')) {
+                alert('No text to download. Please transliterate some text first.');
+                return;
+            }
+
+            const blob = new Blob([outputText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // Create filename based on scripts used
+            const sourceScript = document.getElementById('source-script').value;
+            const targetScript = document.getElementById('target-script').value;
+            a.download = `transliteration-${sourceScript}-to-${targetScript}.txt`;
+
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Speech input functionality with language support
+        document.getElementById('speech-input-btn').addEventListener('click', function () {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+                // Set language based on source script
+                const sourceScript = document.getElementById('source-script').value;
+                const langMap = {
+                    'devanagari': 'hi-IN',
+                    'bengali': 'bn-IN',
+                    'tamil': 'ta-IN',
+                    'telugu': 'te-IN',
+                    'kannada': 'kn-IN',
+                    'malayalam': 'ml-IN',
+                    'gujarati': 'gu-IN',
+                    'gurmukhi': 'pa-IN',
+                    'itrans': 'en-US'
+                };
+
+                recognition.lang = langMap[sourceScript] || 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                recognition.onresult = function (event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('input-text').value = transcript;
+                    document.getElementById('char-count').textContent = transcript.length;
+                };
+
+                recognition.onerror = function (event) {
+                    console.error('Speech recognition error', event.error);
+                    if (event.error === 'not-allowed') {
+                        alert('Microphone access is not allowed. Please enable microphone permissions in your browser settings.');
+                    } else {
+                        alert('Error with speech recognition: ' + event.error);
+                    }
+                };
+
+                recognition.start();
+            } else {
+                alert('Speech recognition is not supported in your browser');
+            }
+        });
+
+        // Enhanced Transliterate button functionality
+        document.getElementById('transliterate-btn').addEventListener('click', function () {
+            const inputText = document.getElementById('input-text').value.trim();
+            const sourceScript = document.getElementById('source-script').value;
+            const targetScript = document.getElementById('target-script').value;
+
+            if (!inputText) {
+                alert('Please enter some text to transliterate');
+                return;
+            }
+
+            // Update script names in info section
+            document.getElementById('source-script-name').textContent = getScriptName(sourceScript);
+            document.getElementById('target-script-name').textContent = getScriptName(targetScript);
+
+            // Show loading state
+            const originalButtonText = this.innerHTML;
+            this.innerHTML = '<i data-feather="loader" class="w-5 h-5 mr-2 animate-spin"></i> Processing...';
+            this.disabled = true;
+            feather.replace();
+
+            // Use setTimeout to allow UI to update before processing
+            setTimeout(() => {
+                try {
+                    // Enhanced transliteration with improved accuracy
+                    let result = enhancedTransliteration(inputText, sourceScript, targetScript);
+
+                    // If target is English (itrans), apply capitalization rules
+                    if (targetScript === 'itrans') {
+                        result = capitalizeEnglishSentence(result);
+                    }
+
+                    document.getElementById('output-text').innerHTML =
+                        `<p class="text-gray-800">${result}</p>`;
+                } catch (error) {
+                    console.error('Error:', error);
+                    document.getElementById('output-text').innerHTML =
+                        `<p class="text-red-600">Error: ${error.message}</p>`;
+                } finally {
+                    this.innerHTML = originalButtonText;
+                    this.disabled = false;
+                    feather.replace();
+                }
+            }, 100);
+        });
+
+        // Enhanced transliteration function with improved accuracy
+        function enhancedTransliteration(text, sourceScript, targetScript) {
+            // Common word mappings for better accuracy
+            const wordMappings = {
+                'tamil-itrans': {
+                    'வணக்கம்': 'vanakkam',
+                    'நன்றி': 'nandri',
+                    'சென்னை': 'chennai',
+                    'மதுரை': 'madurai',
+                    'கோயம்புத்தூர்': 'coimbatore',
+                    'தமிழ்நாடு': 'tamil nadu',
+                    'இந்தியா': 'india',
+                    'உலகம்': 'ulagam',
+                    'பள்ளி': 'palli',
+                    'மாணவர்': 'manavar',
+                    'அழகு': 'azhagu',
+                    'நீர்': 'neer',
+                    'தெரு': 'theru',
+                    'வீடு': 'veedu',
+                    'புத்தகம்': 'puthagam',
+                    'பணம்': 'panam'
+                },
+                'hindi-itrans': {
+                    'नमस्ते': 'namaste',
+                    'धन्यवाद': 'dhanyavaad',
+                    'दिल्ली': 'delhi',
+                    'मुंबई': 'mumbai',
+                    'भारत': 'bharat',
+                    'हिंदी': 'hindi',
+                    'पानी': 'paani',
+                    'किताब': 'kitaab',
+                    'स्कूल': 'school',
+                    'छात्र': 'chhaatra'
+                },
+                'bengali-itrans': {
+                    'নমস্কার': 'nomoskar',
+                    'ধন্যবাদ': 'dhonyobaad',
+                    'কলকাতা': 'kolkata',
+                    'ভারত': 'bharat',
+                    'বাংলা': 'bangla',
+                    'জল': 'jal',
+                    'বই': 'boi',
+                    'বিদ্যালয়': 'bidyalay',
+                    'ছাত্র': 'chhatro'
+                }
+            };
+
+            let result = text;
+
+            // Apply word mappings if available
+            const mappingKey = `${sourceScript}-${targetScript}`;
+            if (wordMappings[mappingKey]) {
+                for (const [sourceWord, targetWord] of Object.entries(wordMappings[mappingKey])) {
+                    const regex = new RegExp(sourceWord, 'g');
+                    result = result.replace(regex, targetWord);
+                }
+            }
+
+            // Use Sanscript for the remaining text
+            return Sanscript.t(result, sourceScript, targetScript);
+        }
+
+        // Function to capitalize English sentences properly
+        function capitalizeEnglishSentence(text) {
+            if (!text) return text;
+
+            // Split into sentences
+            const sentences = text.split(/([.!?]+)/);
+            let result = '';
+
+            for (let i = 0; i < sentences.length; i++) {
+                if (i % 2 === 0) {
+                    // This is a sentence (not punctuation)
+                    let sentence = sentences[i].trim();
+                    if (sentence.length > 0) {
+                        // Capitalize first letter, lowercase the rest
+                        sentence = sentence.charAt(0).toUpperCase() +
+                            sentence.slice(1).toLowerCase();
+                    }
+                    result += sentence;
+                } else {
+                    // This is punctuation
+                    result += sentences[i];
+                }
+
+                // Add space after punctuation if not the last element
+                if (i < sentences.length - 1 && sentences[i].length > 0) {
+                    result += ' ';
+                }
+            }
+
+            return result.trim();
+        }
+
+        // Tab switching
+        document.getElementById('text-tab').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('text-tab').classList.add('tab-active');
+            document.getElementById('image-tab').classList.remove('tab-active');
+            document.getElementById('text-input-section').classList.remove('hidden');
+            document.getElementById('image-ocr-section').classList.add('hidden');
+        });
+
+        document.getElementById('image-tab').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('image-tab').classList.add('tab-active');
+            document.getElementById('text-tab').classList.remove('tab-active');
+            document.getElementById('image-ocr-section').classList.remove('hidden');
+            document.getElementById('text-input-section').classList.add('hidden');
+        });
+
+        // Image upload preview
+        document.getElementById('ocr-image-upload').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Check file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File size exceeds 10MB limit. Please choose a smaller file.');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.getElementById('image-preview');
+                    preview.innerHTML = `<img src="${event.target.result}" alt="Preview" class="max-h-48 mx-auto rounded">`;
+                }
+                reader.readAsDataURL(file);
+
+                // Reset detected language
+                document.getElementById('detected-language').textContent = 'Auto-detecting...';
+            }
+        });
+
+        // Enhanced OCR processing with auto language detection
+        document.getElementById('ocr-process-btn').addEventListener('click', async function () {
+            const fileInput = document.getElementById('ocr-image-upload');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please upload an image first');
+                return;
+            }
+
+            const loader = document.getElementById('ocr-loader');
+            const btnText = document.getElementById('ocr-btn-text');
+            const extractedTextDiv = document.getElementById('ocr-extracted-text');
+            const progressSection = document.getElementById('ocr-progress');
+            const progressBar = document.getElementById('ocr-progress-bar');
+            const progressStatus = document.getElementById('ocr-progress-status');
+            const progressPercentage = document.getElementById('ocr-progress-percentage');
+            const detectedLanguageSpan = document.getElementById('detected-language');
+
+            btnText.textContent = 'Processing';
+            loader.classList.remove('hidden');
+            progressSection.classList.remove('hidden');
+            this.disabled = true;
+
+            try {
+                // First, try to detect language automatically
+                detectedLanguageSpan.textContent = 'Detecting language...';
+
+                // Use Tesseract.js for OCR with auto language detection
+                const result = await Tesseract.recognize(
+                    fileInput.files[0],
+                    'eng+hin+ben+tam+tel+kan+mal+guj+pan+ori', // Multiple languages for auto-detection
+                    {
+                        logger: message => {
+                            if (message.status === 'recognizing text') {
+                                const progress = Math.round(message.progress * 100);
+                                progressBar.style.width = `${progress}%`;
+                                progressPercentage.textContent = `${progress}%`;
+
+                                if (message.progress === 1) {
+                                    progressStatus.textContent = 'Finalizing...';
+                                } else {
+                                    progressStatus.textContent = 'Recognizing text...';
+                                }
+                            }
+                        }
+                    }
+                );
+
+                // Extract text and detect language
+                const extractedText = result.data.text;
+                extractedTextDiv.innerHTML = `<p class="text-gray-800">${extractedText}</p>`;
+
+                // Auto-detect language based on text content
+                const detectedLanguage = detectLanguageFromText(extractedText);
+                detectedLanguageSpan.textContent = getLanguageName(detectedLanguage);
+
+            } catch (error) {
+                console.error('Error:', error);
+                extractedTextDiv.innerHTML = `<p class="text-red-600">Error: ${error.message}</p>`;
+                detectedLanguageSpan.textContent = 'Error detecting language';
+            } finally {
+                btnText.textContent = 'Extract Text';
+                loader.classList.add('hidden');
+                progressSection.classList.add('hidden');
+                this.disabled = false;
+            }
+        });
+
+        // Function to detect language from text
+        function detectLanguageFromText(text) {
+            if (!text || text.trim().length < 5) {
+                return 'eng'; // Default to English if text is too short
+            }
+
+            // Common character patterns for different Indian languages
+            const languagePatterns = {
+                'hin': /[\u0900-\u097F]/, // Devanagari
+                'ben': /[\u0980-\u09FF]/, // Bengali
+                'tam': /[\u0B80-\u0BFF]/, // Tamil
+                'tel': /[\u0C00-\u0C7F]/, // Telugu
+                'kan': /[\u0C80-\u0CFF]/, // Kannada
+                'mal': /[\u0D00-\u0D7F]/, // Malayalam
+                'guj': /[\u0A80-\u0AFF]/, // Gujarati
+                'pan': /[\u0A00-\u0A7F]/, // Punjabi (Gurmukhi)
+                'ori': /[\u0B00-\u0B7F]/  // Odia
+            };
+
+            // Check for language-specific characters
+            for (const [langCode, pattern] of Object.entries(languagePatterns)) {
+                if (pattern.test(text)) {
+                    return langCode;
+                }
+            }
+
+            // If no Indian script detected, assume English
+            return 'eng';
+        }
+
+        // Function to get language name from code
+        function getLanguageName(langCode) {
+            const languageNames = {
+                'eng': 'English',
+                'hin': 'Hindi',
+                'ben': 'Bengali',
+                'tam': 'Tamil',
+                'tel': 'Telugu',
+                'kan': 'Kannada',
+                'mal': 'Malayalam',
+                'guj': 'Gujarati',
+                'pan': 'Punjabi',
+                'ori': 'Odia'
+            };
+            return languageNames[langCode] || 'Unknown';
+        }
+
+        // Copy OCR text button
+        document.getElementById('ocr-copy-btn').addEventListener('click', function () {
+            const extractedText = document.getElementById('ocr-extracted-text').textContent;
+
+            if (!extractedText || extractedText.includes('Extracted text will appear here')) {
+                alert('No text to copy. Please extract text from an image first.');
+                return;
+            }
+
+            navigator.clipboard.writeText(extractedText).then(() => {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i data-feather="check" class="w-3 h-3 inline mr-1"></i> Copied!';
+                feather.replace();
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    feather.replace();
+                }, 2000);
+            });
+        });
+
+        // Use OCR text for transliteration button
+        document.getElementById('ocr-use-btn').addEventListener('click', function () {
+            const extractedText = document.getElementById('ocr-extracted-text').textContent;
+
+            if (!extractedText || extractedText.includes('Extracted text will appear here')) {
+                alert('No text to use. Please extract text from an image first.');
+                return;
+            }
+
+            document.getElementById('input-text').value = extractedText;
+            document.getElementById('char-count').textContent = extractedText.length;
+
+            // Switch to text tab
+            document.getElementById('text-tab').classList.add('tab-active');
+            document.getElementById('image-tab').classList.remove('tab-active');
+            document.getElementById('text-input-section').classList.remove('hidden');
+            document.getElementById('image-ocr-section').classList.add('hidden');
+
+            // Auto-select the script based on detected language
+            const detectedLanguage = document.getElementById('detected-language').textContent.toLowerCase();
+            const languageToScriptMap = {
+                'hindi': 'devanagari',
+                'bengali': 'bengali',
+                'tamil': 'tamil',
+                'telugu': 'telugu',
+                'kannada': 'kannada',
+                'malayalam': 'malayalam',
+                'gujarati': 'gujarati',
+                'punjabi': 'gurmukhi',
+                'odia': 'oriya',
+                'english': 'itrans'
+            };
+
+            for (const [langName, script] of Object.entries(languageToScriptMap)) {
+                if (detectedLanguage.includes(langName)) {
+                    document.getElementById('source-script').value = script;
+                    break;
+                }
+            }
+        });
+
+        // Cancel OCR button
+        document.getElementById('ocr-cancel-btn').addEventListener('click', function () {
+            document.getElementById('ocr-image-upload').value = '';
+            document.getElementById('image-preview').innerHTML = '<p class="text-gray-400 italic">Image preview will appear here...</p>';
+            document.getElementById('ocr-extracted-text').innerHTML = '<p class="text-gray-400 italic">Extracted text will appear here...</p>';
+            document.getElementById('detected-language').textContent = 'Auto-detecting...';
+            document.getElementById('ocr-progress').classList.add('hidden');
+        });
+
+        // Helper function to get script name from code
+        function getScriptName(code) {
+            const scripts = {
+                'devanagari': 'Hindi (Devanagari)',
+                'bengali': 'Bengali',
+                'tamil': 'Tamil',
+                'telugu': 'Telugu',
+                'kannada': 'Kannada',
+                'malayalam': 'Malayalam',
+                'gujarati': 'Gujarati',
+                'gurmukhi': 'Punjabi (Gurmukhi)',
+                'oriya': 'Odia',
+                'itrans': 'English (Latin)',
+                'auto': 'Auto Detect'
+            };
+            return scripts[code] || code;
+        }
+
+        // Update script names when dropdowns change
+        document.getElementById('source-script').addEventListener('change', function () {
+            document.getElementById('source-script-name').textContent = getScriptName(this.value);
+        });
+
+        document.getElementById('target-script').addEventListener('change', function () {
+            document.getElementById('target-script-name').textContent = getScriptName(this.value);
+        });
+
+        // Load voices when they become available
+        if ('speechSynthesis' in window) {
+            speechSynthesis.onvoiceschanged = function () {
+                // Voices are loaded, we can now use them
+            };
+        }
+    </script>
+</body>
+
+</html>

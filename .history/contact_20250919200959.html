@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Bharat Script Transliterator</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-active {
+            background-color: #F3F4F6;
+            color: #111827;
+        }
+
+        .mobile-menu-hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen">
+    <div id="vanta-bg" class="absolute top-0 left-0 w-full h-full z-0"></div>
+
+    <!-- Navigation -->
+    <nav class="relative z-10 bg-white bg-opacity-90 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">BharatScript</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="index.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                        <a href="transliterate.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Transliterate</a>
+                        <a href="index.html#about"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-900 nav-active">Contact</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button type="button" id="mobile-menu-button"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i data-feather="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile menu, hidden by default -->
+        <div id="mobile-menu" class="mobile-menu-hidden md:hidden bg-white border-t border-gray-200">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="index.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                <a href="transliterate.html"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Transliterate</a>
+                <a href="index.html#about"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                <a href="#"
+                    class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 bg-gray-100">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contact Section -->
+    <main class="relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                    <span class="gradient-text">Contact Us</span>
+                </h1>
+                <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                    Get in touch with our team for any questions or feedback
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-2" data-aos="fade-up" data-aos-delay="100">
+                <!-- Contact Form -->
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Send us a message</h3>
+                        <form id="contact-form" class="space-y-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                                <input type="text" id="name" name="name" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="email" name="email" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label for="subject" class="block text-sm font-medium text-gray-700">Subject</label>
+                                <input type="text" id="subject" name="subject" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-medium text-gray-700">Message</label>
+                                <textarea id="message" name="message" rows="4" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-orange-500 focus:border-orange-500"></textarea>
+                            </div>
+                            <div>
+                                <button type="submit"
+                                    class="btn-gradient w-full text-white py-3 px-4 rounded-md text-base font-medium">
+                                    Send Message
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="space-y-6">
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="flex items-center justify-center h-10 w-10 rounded-md bg-orange-100 text-orange-600">
+                                            <i data-feather="mail" class="h-5 w-5"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Email</p>
+                                        <p class="text-sm text-gray-500">support@bharatscript.com</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="flex items-center justify-center h-10 w-10 rounded-md bg-teal-100 text-teal-600">
+                                            <i data-feather="phone" class="h-5 w-5"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Phone</p>
+                                        <p class="text-sm text-gray-500">+91 98765 43210</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="flex items-center justify-center h-10 w-10 rounded-md bg-blue-100 text-blue-600">
+                                            <i data-feather="map-pin" class="h-5 w-5"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-sm font-medium text-gray-900">Address</p>
+                                        <p class="text-sm text-gray-500">123 Tech Park, Bengaluru<br>Karnataka, India -
+                                            560001</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow rounded-lg overflow-hidden">
+                        <div class="p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Follow Us</h3>
+                            <div class="flex space-x-4">
+                                <a href="#" class="text-gray-400 hover:text-orange-500">
+                                    <i data-feather="github" class="h-6 w-6"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-orange-500">
+                                    <i data-feather="twitter" class="h-6 w-6"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-orange-500">
+                                    <i data-feather="linkedin" class="h-6 w-6"></i>
+                                </a>
+                                <a href="#" class="text-gray-400 hover:text-orange-500">
+                                    <i data-feather="facebook" class="h-6 w-6"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FAQ Section -->
+    <section class="relative z-10 py-12 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                    Frequently Asked Questions
+                </h2>
+                <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                    Find answers to common questions about BharatScript
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2" data-aos="fade-up" data-aos-delay="100">
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">What scripts does BharatScript support?</h3>
+                        <p class="text-gray-500">
+                            We support all major Indian scripts including Devanagari, Bengali, Tamil, Telugu, Kannada,
+                            Malayalam, Gujarati, Gurmukhi, and Odia.
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Is BharatScript free to use?</h3>
+                        <p class="text-gray-500">
+                            Yes, BharatScript is completely free to use for all your transliteration needs.
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">How accurate is the transliteration?</h3>
+                        <p class="text-gray-500">
+                            Our transliteration is highly accurate, using advanced algorithms and the Sanscript library
+                            for precise conversions between scripts.
+                        </p>
+                    </div>
+                </div>
+                <div class="bg-white shadow rounded-lg overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Can I use BharatScript for commercial
+                            purposes?</h3>
+                        <p class="text-gray-500">
+                            Yes, BharatScript can be used for both personal and commercial purposes. Please check our
+                            terms of service for more details.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 bg-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                    <div class="flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-white">BharatScript</span>
+                    </div>
+                    <p class="text-gray-300 text-base">
+                        Making Indian scripts accessible to everyone through technology.
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i data-feather="github"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white">
+                            <i data-feather="twitter"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="transliterate.html"
+                                        class="text-base text-gray-300 hover:text-white">Transliterate</a>
+                                </li>
+                                <li>
+                                    <a href="transliterate.html#ocr-section"
+                                        class="text-base text-gray-300 hover:text-white">OCR</a>
+                                </li>
+                                <li>
+                                    <a href="transliterate.html"
+                                        class="text-base text-gray-300 hover:text-white">Text-to-Speech</a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-12 md:mt-0">
+                            <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Company</h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="index.html#about"
+                                        class="text-base text-gray-300 hover:text-white">About</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-300 hover:text-white">Contact</a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-300 hover:text-white">Careers</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">Technology</h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <span class="text-base text-gray-400">Sanscript.js</span>
+                                </li>
+                                <li>
+                                    <span class="text-base text-gray-400">Tesseract.js</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-700 pt-8">
+                <p class="text-base text-gray-400 xl:text-center">&copy; 2025 BharatScript. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+        AOS.init({ duration: 800, easing: 'ease-in-out', once: true });
+
+        VANTA.GLOBE({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0xf97316,
+            backgroundColor: 0xf9fafb,
+            size: 0.8
+        });
+
+        // Mobile menu functionality
+        document.getElementById('mobile-menu-button').addEventListener('click', function () {
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu.classList.contains('mobile-menu-hidden')) {
+                mobileMenu.classList.remove('mobile-menu-hidden');
+            } else {
+                mobileMenu.classList.add('mobile-menu-hidden');
+            }
+        });
+
+        // Contact form submission
+        document.getElementById('contact-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Get form values
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+
+            // Simple validation
+            if (!name || !email || !subject || !message) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+
+            // Show success message (in a real application, you would send this data to a server)
+            alert('Thank you for your message! We will get back to you soon.');
+            this.reset();
+        });
+    </script>
+</body>
+
+</html>

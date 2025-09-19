@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Transliteration Tool | Bharat Script</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@indic-transliteration/sanscript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F97316;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #F97316;
+            color: #F97316;
+            font-weight: 600;
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .language-option span {
+            margin-left: 8px;
+        }
+
+        /* Camera and OCR enhancements */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        #camera-video {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .camera-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+
+        .ocr-selection-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 2px dashed #F97316;
+            background-color: rgba(249, 115, 22, 0.1);
+            pointer-events: none;
+            display: none;
+        }
+
+        .text-selection-mode .ocr-selection-overlay {
+            pointer-events: all;
+            cursor: crosshair;
+        }
+
+        .enhanced-ocr-result {
+            position: relative;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            background-color: #f9fafb;
+            min-height: 200px;
+        }
+
+        .word-box {
+            display: inline-block;
+            padding: 2px 4px;
+            margin: 1px;
+            border-radius: 3px;
+            background-color: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .word-box:hover {
+            background-color: rgba(249, 115, 22, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .word-box.selected {
+            background-color: rgba(249, 115, 22, 0.3);
+            border: 1px solid #F97316;
+        }
+
+        .ocr-action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        .accuracy-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .high-accuracy {
+            background-color: #10B981;
+            color: white;
+        }
+
+        .medium-accuracy {
+            background-color: #F59E0B;
+            color: white;
+        }
+
+        .low-accuracy {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .ocr-word-confidence {
+            font-size: 0.7rem;
+            color: #6B7280;
+            display: block;
+        }
+
+        .pronunciation-hint {
+            font-size: 0.8rem;
+            color: #6B7280;
+            font-style: italic;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white bg-opacity-90 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">BharatScript</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="index.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-900 bg-gray-100">Transliterate</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i data-feather="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center mb-8" data-aos="fade-up">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                <span class="gradient-text">Advanced Script Transliterator</span>
+            </h1>
+            <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                Convert text between different Indian scripts with high accuracy and pronunciation guidance
+            </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-8" data-aos="fade-up" data-aos-delay="100">
+            <nav class="-mb-px flex space-x-8">
+                <a href="#" id="text-tab" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Text Input
+                </a>
+                <a href="#" id="image-tab"
+                    class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Image OCR
+                </a>
+            </nav>
+        </div>
+
+        <!-- Transliteration Tool -->
+        <div id="text-input-section" class="bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up"
+            data-aos-delay="200">
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Input Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Input</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Source:</label>
+                                <select id="source-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                    <option value="gujarati">Gujarati</option>
+                                    <option value="gurmukhi">Punjabi (Gurmukhi)</option>
+                                    <option value="oriya">Odia</option>
+                                    <option value="itrans">Latin (ITRANS)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <textarea id="input-text" rows="12"
+                            class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3"
+                            placeholder="Type or paste your text here..."></textarea>
+                        <div class="mt-2 flex justify-between">
+                            <div class="flex items-center">
+                                <span class="text-xs text-gray-500">Characters: <span id="char-count">0</span></span>
+                            </div>
+                            <button id="speech-input-btn" class="text-sm text-orange-600 hover:text-orange-800">
+                                <i data-feather="mic" class="w-4 h-4 inline mr-1"></i> Speech Input
+                            </button>
+                        </div>
+                        <div id="pronunciation-hints" class="mt-2 hidden">
+                            <p class="text-xs text-gray-500">Pronunciation hints will appear here as you type</p>
+                        </div>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Output</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Target:</label>
+                                <select id="target-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="itrans">English (Latin)</option>
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                    <option value="gujarati">Gujarati</option>
+                                    <option value="gurmukhi">Punjabi (Gurmukhi)</option>
+                                    <option value="oriya">Odia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="output-text"
+                            class="shadow-sm block w-full sm:text-sm border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Transliterated text will appear here...</p>
+                        </div>
+                        <div id="output-pronunciation" class="mt-2 hidden">
+                            <p class="text-xs text-gray-500">Pronunciation guide will appear here</p>
+                        </div>
+                        <div class="mt-2 flex justify-end space-x-3">
+                            <button id="copy-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="copy" class="w-4 h-4 mr-1"></i> Copy
+                            </button>
+                            <button id="speak-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="volume-2" class="w-4 h-4 mr-1"></i> Speak
+                            </button>
+                            <button id="download-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="download" class="w-4 h-4 mr-1"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-center">
+                    <button id="transliterate-btn"
+                        class="btn-gradient text-white px-8 py-3 rounded-md text-lg font-medium inline-flex items-center">
+                        <i data-feather="repeat" class="w-5 h-5 mr-2"></i> Transliterate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image OCR Section (Hidden by default) -->
+        <div id="image-ocr-section" class="bg-white shadow rounded-lg overflow-hidden mt-8 hidden" data-aos="fade-up">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Image with Text</h3>
+
+                <!-- Camera Mode Toggle -->
+                <div class="flex justify-center mb-4">
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <button id="upload-mode-btn" type="button"
+                            class="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-l-lg hover:bg-orange-700 focus:z-10 focus:ring-2 focus:ring-orange-500">
+                            <i data-feather="upload" class="w-4 h-4 inline mr-1"></i> Upload
+                        </button>
+                        <button id="camera-mode-btn" type="button"
+                            class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-orange-700 focus:z-10 focus:ring-2 focus:ring-orange-500">
+                            <i data-feather="camera" class="w-4 h-4 inline mr-1"></i> Camera
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div id="upload-section">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <div class="flex justify-center">
+                            <i data-feather="image" class="w-12 w-12 text-gray-400"></i>
+                        </div>
+                        <div class="mt-4 flex text-sm text-gray-600">
+                            <label
+                                class="file-upload relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none">
+                                <span>Upload an image file</span>
+                                <input type="file" id="ocr-image-upload" class="file-upload-input" accept="image/*">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            PNG, JPG, GIF up to 10MB
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Camera Section -->
+                <div id="camera-section" class="hidden">
+                    <div class="camera-container">
+                        <video id="camera-video" autoplay playsinline></video>
+                        <div class="camera-controls">
+                            <button id="capture-btn" class="camera-btn">
+                                <i data-feather="camera" class="text-gray-800"></i>
+                            </button>
+                            <button id="switch-camera-btn" class="camera-btn">
+                                <i data-feather="refresh-cw" class="text-gray-800"></i>
+                            </button>
+                        </div>
+                        <div class="ocr-selection-overlay"></div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <canvas id="capture-canvas" class="hidden"></canvas>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Original Image Preview -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Original Image</h4>
+                        <div id="image-preview"
+                            class="border border-gray-200 rounded-md p-4 flex items-center justify-center bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Image preview will appear here...</p>
+                        </div>
+                    </div>
+
+                    <!-- Extracted Text -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-sm font-medium text-gray-700">Extracted Text</h4>
+                            <div class="flex items-center">
+                                <span id="detected-language" class="text-xs text-gray-500 mr-2 hidden">Detected: </span>
+                                <label class="mr-2 text-xs font-medium text-gray-700">Language:</label>
+                                <select id="ocr-language"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-xs">
+                                    <option value="auto">Auto Detect</option>
+                                    <option value="eng">English</option>
+                                    <option value="hin">Hindi</option>
+                                    <option value="ben">Bengali</option>
+                                    <option value="tam">Tamil</option>
+                                    <option value="tel">Telugu</option>
+                                    <option value="kan">Kannada</option>
+                                    <option value="mal">Malayalam</option>
+                                    <option value="guj">Gujarati</option>
+                                    <option value="pan">Punjabi</option>
+                                    <option value="ori">Odia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="ocr-extracted-text" class="enhanced-ocr-result">
+                            <p class="text-gray-400 italic">Extracted text will appear here...</p>
+                        </div>
+                        <div class="ocr-action-bar">
+                            <div>
+                                <button id="ocr-select-text-btn"
+                                    class="text-xs text-orange-600 hover:text-orange-800 mr-3">
+                                    <i data-feather="edit" class="w-3 h-3 inline mr-1"></i> Select Text
+                                </button>
+                                <button id="ocr-clear-selection-btn"
+                                    class="text-xs text-gray-600 hover:text-gray-800 hidden">
+                                    <i data-feather="x" class="w-3 h-3 inline mr-1"></i> Clear Selection
+                                </button>
+                            </div>
+                            <div>
+                                <button id="ocr-copy-btn" class="text-xs text-orange-600 hover:text-orange-800 mr-3">
+                                    <i data-feather="copy" class="w-3 h-3 inline mr-1"></i> Copy Text
+                                </button>
+                                <button id="ocr-use-btn" class="text-xs text-orange-600 hover:text-orange-800">
+                                    <i data-feather="arrow-right" class="w-3 h-3 inline mr-1"></i> Use for
+                                    Transliteration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OCR Processing Controls -->
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button id="ocr-cancel-btn"
+                        class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        Clear
+                    </button>
+                    <button id="ocr-process-btn"
+                        class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none">
+                        <div class="flex items-center">
+                            <span id="ocr-btn-text">Extract Text</span>
+                            <div id="ocr-loader" class="loader hidden ml-2"></div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- OCR Progress -->
+                <div id="ocr-progress" class="mt-4 hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="ocr-progress-bar" class="bg-orange-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span id="ocr-progress-status">Initializing...</span>
+                        <span id="ocr-progress-percentage">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script Information -->
+        <div class="mt-8 bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">About Indian Scripts</h3>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Source Script: <span
+                                id="source-script-name">Devanagari</span></h4>
+                        <p class="text-sm text-gray-500">
+                            Devanagari is an abugida alphabet of India and Nepal. It is written from left to right, has
+                            a strong preference for symmetrical rounded shapes within squared outlines, and is
+                            recognizable by a horizontal line that runs along the top of full letters.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Target Script: <span
+                                id="target-script-name">Latin (English)</span></h4>
+                        <p class="text-sm text-gray-500">
+                            The Latin script is the basis of the international phonetic alphabet. Our transliteration
+                            follows standard academic conventions for representing Indian scripts in Latin characters,
+                            preserving pronunciation as closely as possible.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                    <div class="flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-white">BharatScript</span>
+                    </div>
+                    <p class="text-gray-300 text-base">
+                        Making Indian scripts accessible to everyone through technology.
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Navigation
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="index.html" class="text-base text-gray-400 hover:text-white">
+                                        Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Transliteration Tool
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        About
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-12 md:mt-0">
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Support
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Documentation
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Contact
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Acknowledgments
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        AICTE
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        IKS
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Technology
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <span class="text-base text-gray-400">Sanscript.js</span>
+                                </li>
+                                <li>
+                                    <span class="text-base text-gray-400">Tesseract.js</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 border-t border-gray-700 pt-8">
+                <p class="text-base text-gray-400 text-center">
+                    &copy; 2023 Bharat Script Transliterator. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // Enhanced transliteration mappings for better accuracy
+        const enhancedTransliterationMaps = {
+            'tamil-itrans': {
+                'க்': 'k', 'க': 'ka', 'கா': 'kā', 'கி': 'ki', 'கீ': 'kī', 'கு': 'ku', 'கூ': 'kū', 'கெ': 'ke', 'கே': 'kē', 'கை': 'kai', 'கொ': 'ko', 'கோ': 'kō', 'கௌ': 'kau',
+                'ங்': 'ṅ', 'ங': 'ṅa', 'ஙா': 'ṅā', 'ஙி': 'ṅi', 'ஙீ': 'ṅī', 'ஙு': 'ṅu', 'ஙூ': 'ṅū', 'ஙெ': 'ṅe', 'ஙே': 'ṅē', 'ஙை': 'ṅai', 'ஙொ': 'ṅo', 'ஙோ': 'ṅō', 'ஙௌ': 'ṅau',
+                'ச்': 'c', 'ச': 'ca', 'சா': 'cā', 'சி': 'ci', 'சீ': 'cī', 'சு': 'cu', 'சூ': 'cū', 'செ': 'ce', 'சே': 'cē', 'சை': 'cai', 'சொ': 'co', 'சோ': 'cō', 'சௌ': 'cau',
+                'ஞ்': 'ñ', 'ஞ': 'ña', 'ஞா': 'ñā', 'ஞி': 'ñi', 'ஞீ': 'ñī', 'ஞு': 'ñu', 'ஞூ': 'ñū', 'ஞெ': 'ñe', 'ஞே': 'ñē', 'ஞை': 'ñai', 'ஞொ': 'ño', 'ஞோ': 'ñō', 'ஞௌ': 'ñau',
+                'ட்': 'ṭ', 'ட': 'ṭa', 'டா': 'ṭā', 'டி': 'ṭi', 'டீ': 'ṭī', 'டு': 'ṭu', 'டூ': 'ṭū', 'டெ': 'ṭe', 'டே': 'ṭē', 'டை': 'ṭai', 'டொ': 'ṭo', 'டோ': 'ṭō', 'டௌ': 'ṭau',
+                'ண்': 'ṇ', 'ண': 'ṇa', 'ணா': 'ṇā', 'ணி': 'ṇi', 'ணீ': 'ṇī', 'ணு': 'ṇu', 'ணூ': 'ṇū', 'ணெ': 'ṇe', 'ணே': 'ṇē', 'ணை': 'ṇai', 'ணொ': 'ṇo', 'ணோ': 'ṇō', 'ணௌ': 'ṇau',
+                'த்': 't', 'த': 'ta', 'தா': 'tā', 'தி': 'ti', 'தீ': 'tī', 'து': 'tu', 'தூ': 'tū', 'தெ': 'te', 'தே': 'tē', 'தை': 'tai', 'தொ': 'to', 'தோ': 'tō', 'தௌ': 'tau',
+                'ந்': 'n', 'ந': 'na', 'நா': 'nā', 'நி': 'ni', 'நீ': 'nī', 'நு': 'nu', 'நூ': 'nū', 'நெ': 'ne', 'நே': 'nē', 'நை': 'nai', 'நொ': 'no', 'நோ': 'nō', 'நௌ': 'nau',
+                'ப்': 'p', 'ப': 'pa', 'பா': 'pā', 'பி': 'pi', 'பீ': 'pī', 'பு': 'pu', 'பூ': 'pū', 'பெ': 'pe', 'பே': 'pē', 'பை': 'pai', 'பொ': 'po', 'போ': 'pō', 'பௌ': 'pau',
+                'ம்': 'm', 'ம': 'ma', 'மா': 'mā', 'மி': 'mi', 'மீ': 'mī', 'மு': 'mu', 'மூ': 'mū', 'மெ': 'me', 'மே': 'mē', 'மை': 'mai', 'மொ': 'mo', 'மோ': 'mō', 'மௌ': 'mau',
+                'ய்': 'y', 'ய': 'ya', 'யா': 'yā', 'யி': 'yi', 'யீ': 'yī', 'யு': 'yu', 'யூ': 'yū', 'யெ': 'ye', 'யே': 'yē', 'யை': 'yai', 'யொ': 'yo', 'யோ': 'yō', 'யௌ': 'yau',
+                'ர்': 'r', 'ர': 'ra', 'ரா': 'rā', 'ரி': 'ri', 'ரீ': 'rī', 'ரு': 'ru', 'ரூ': 'rū', 'ரெ': 're', 'ரே': 'rē', 'ரை': 'rai', 'ரொ': 'ro', 'ரோ': 'rō', 'ரௌ': 'rau',
+                'ல்': 'l', 'ல': 'la', 'லா': 'lā', 'லி': 'li', 'லீ': 'lī', 'லு': 'lu', 'லூ': 'lū', 'லெ': 'le', 'லே': 'lē', 'லை': 'lai', 'லொ': 'lo', 'லோ': 'lō', 'லௌ': 'lau',
+                'வ்': 'v', 'வ': 'va', 'வா': 'vā', 'வி': 'vi', 'வீ': 'vī', 'வு': 'vu', 'வூ': 'vū', 'வெ': 've', 'வே': 'vē', 'வை': 'vai', 'வொ': 'vo', 'வோ': 'vō', 'வௌ': 'vau',
+                'ழ்': 'ḻ', 'ழ': 'ḻa', 'ழா': 'ḻā', 'ழி': 'ḻi', 'ழீ': 'ḻī', 'ழு': 'ḻu', 'ழூ': 'ḻū', 'ழெ': 'ḻe', 'ழே': 'ḻē', 'ழை': 'ḻai', 'ழொ': 'ḻo', 'ழோ': 'ḻō', 'ழௌ': 'ḻau',
+                'ள்': 'ḷ', 'ள': 'ḷa', 'ளா': 'ḷā', 'ளி': 'ḷi', 'ளீ': 'ḷī', 'ளு': 'ḷu', 'ளூ': 'ḷū', 'ளெ': 'ḷe', 'ளே': 'ḷē', 'ளை': 'ḷai', 'ளொ': 'ḷo', 'ளோ': 'ḷō', 'ளௌ': 'ḷau',
+                'ற்': 'ṟ', 'ற': 'ṟa', 'றா': 'ṟā', 'றி': 'ṟi', 'றீ': 'ṟī', 'று': 'ṟu', 'றூ': 'ṟū', 'றெ': 'ṟe', 'றே': 'ṟē', 'றை': 'ṟai', 'றொ': 'ṟo', 'றோ': 'ṟō', 'றௌ': 'ṟau',
+                'ன்': 'ṉ', 'ன': 'ṉa', 'னா': 'ṉā', 'னி': 'ṉi', 'னீ': 'ṉī', 'னு': 'ṉu', 'னூ': 'ṉū', 'னெ': 'ṉe', 'னே': 'ṉē', 'னை': 'ṉai', 'னொ': 'ṉo', 'னோ': 'ṉō', 'னௌ': 'ṉau',
+                'அ': 'a', 'ஆ': 'ā', 'இ': 'i', 'ஈ': 'ī', 'உ': 'u', 'ஊ': 'ū', 'எ': 'e', 'ஏ': 'ē', 'ஐ': 'ai', 'ஒ': 'o', 'ஓ': 'ō', 'ஔ': 'au'
+            }
+        };
+
+            // Add similar enhanced mappings for other scripts
+        };
+
+        // DOM elements
+        const textTab = document.getElementById('text-tab');
+        const imageTab = document.getElementById('image-tab');
+        const textInputSection = document.getElementById('text-input-section');
+        const imageOcrSection = document.getElementById('image-ocr-section');
+        const inputText = document.getElementById('input-text');
+        const outputText = document.getElementById('output-text');
+        const sourceScript = document.getElementById('source-script');
+        const targetScript = document.getElementById('target-script');
+        const transliterateBtn = document.getElementById('transliterate-btn');
+        const charCount = document.getElementById('char-count');
+        const copyBtn = document.getElementById('copy-btn');
+        const speakBtn = document.getElementById('speak-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const speechInputBtn = document.getElementById('speech-input-btn');
+        const pronunciationHints = document.getElementById('pronunciation-hints');
+        const outputPronunciation = document.getElementById('output-pronunciation');
+        const sourceScriptName = document.getElementById('source-script-name');
+        const targetScriptName = document.getElementById('target-script-name');
+
+        // OCR elements
+        const uploadModeBtn = document.getElementById('upload-mode-btn');
+        const cameraModeBtn = document.getElementById('camera-mode-btn');
+        const uploadSection = document.getElementById('upload-section');
+        const cameraSection = document.getElementById('camera-section');
+        const ocrImageUpload = document.getElementById('ocr-image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const ocrExtractedText = document.getElementById('ocr-extracted-text');
+        const ocrLanguage = document.getElementById('ocr-language');
+        const ocrProcessBtn = document.getElementById('ocr-process-btn');
+        const ocrLoader = document.getElementById('ocr-loader');
+        const ocrBtnText = document.getElementById('ocr-btn-text');
+        const ocrProgress = document.getElementById('ocr-progress');
+        const ocrProgressBar = document.getElementById('ocr-progress-bar');
+        const ocrProgressStatus = document.getElementById('ocr-progress-status');
+        const ocrProgressPercentage = document.getElementById('ocr-progress-percentage');
+        const ocrCancelBtn = document.getElementById('ocr-cancel-btn');
+        const ocrCopyBtn = document.getElementById('ocr-copy-btn');
+        const ocrUseBtn = document.getElementById('ocr-use-btn');
+        const detectedLanguage = document.getElementById('detected-language');
+        const ocrSelectTextBtn = document.getElementById('ocr-select-text-btn');
+        const ocrClearSelectionBtn = document.getElementById('ocr-clear-selection-btn');
+
+        // Camera elements
+        const cameraVideo = document.getElementById('camera-video');
+        const captureBtn = document.getElementById('capture-btn');
+        const switchCameraBtn = document.getElementById('switch-camera-btn');
+        const captureCanvas = document.getElementById('capture-canvas');
+        const ocrSelectionOverlay = document.querySelector('.ocr-selection-overlay');
+
+        // State variables
+        let currentStream = null;
+        let cameras = [];
+        let currentCameraIndex = 0;
+        let isTextSelectionMode = false;
+        let selectedWords = new Set();
+        let recognition = null;
+
+        // Tab switching
+        textTab.addEventListener('click', () => {
+            textTab.classList.add('tab-active');
+            imageTab.classList.remove('tab-active');
+            textInputSection.classList.remove('hidden');
+            imageOcrSection.classList.add('hidden');
+        });
+
+        imageTab.addEventListener('click', () => {
+            imageTab.classList.add('tab-active');
+            textTab.classList.remove('tab-active');
+            imageOcrSection.classList.remove('hidden');
+            textInputSection.classList.add('hidden');
+        });
+
+        // Character count
+        inputText.addEventListener('input', () => {
+            charCount.textContent = inputText.value.length;
+        });
+
+        // Script information update
+        sourceScript.addEventListener('change', updateScriptInfo);
+        targetScript.addEventListener('change', updateScriptInfo);
+
+        function updateScriptInfo() {
+            sourceScriptName.textContent = sourceScript.options[sourceScript.selectedIndex].text;
+            targetScriptName.textContent = targetScript.options[targetScript.selectedIndex].text;
+        }
+
+        // Enhanced transliteration function
+        function enhancedTransliterate(text, fromScript, toScript) {
+            // Use the enhanced mappings if available
+            if (fromScript === 'tamil' && toScript === 'itrans') {
+                return transliterateUsingMapping(text, enhancedTransliterationMaps['tamil-itrans']);
+            }
+
+            // Fallback to Sanscript for other conversions
+            try {
+                return Sanscript.t(text, fromScript, toScript);
+            } catch (error) {
+                console.error('Transliteration error:', error);
+                return text;
+            }
+        }
+
+        function transliterateUsingMapping(text, mapping) {
+            let result = '';
+            let i = 0;
+
+            while (i < text.length) {
+                let found = false;
+
+                // Check for multi-character sequences first (longest match)
+                for (let len = 4; len >= 1; len--) {
+                    if (i + len <= text.length) {
+                        const segment = text.substr(i, len);
+                        if (mapping[segment]) {
+                            result += mapping[segment];
+                            i += len;
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found) {
+                    // If no mapping found, keep the original character
+                    result += text[i];
+                    i++;
+                }
+            }
+
+            return result;
+        }
+
+        // Transliteration handler
+        transliterateBtn.addEventListener('click', () => {
+            const text = inputText.value;
+            const fromScript = sourceScript.value;
+            const toScript = targetScript.value;
+
+            if (!text.trim()) {
+                outputText.innerHTML = '<p class="text-gray-400 italic">Please enter some text to transliterate</p>';
+                return;
+            }
+
+            const result = enhancedTransliterate(text, fromScript, toScript);
+            outputText.textContent = result;
+
+            // Show pronunciation guide for Latin output
+            if (toScript === 'itrans') {
+                showPronunciationGuide(result);
+            } else {
+                outputPronunciation.classList.add('hidden');
+            }
+        });
+
+        function showPronunciationGuide(text) {
+            const guide = document.createElement('div');
+            guide.innerHTML = `
+                <p class="text-sm font-medium mb-2">Pronunciation Guide:</p>
+                <p class="text-xs">ā = aa, ī = ee, ū = oo, ṛ = ri, ṝ = rri, ḷ = lri, ḹ = lree</p>
+                <p class="text-xs mt-1">ś = sh, ṣ = sh (retroflex), ñ = nya, ṅ = ng</p>
+            `;
+            outputPronunciation.innerHTML = '';
+            outputPronunciation.appendChild(guide);
+            outputPronunciation.classList.remove('hidden');
+        }
+
+        // Copy, speak, download functionality
+        copyBtn.addEventListener('click', () => {
+            const text = outputText.textContent;
+            if (text && text !== 'Transliterated text will appear here...') {
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalHtml = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i data-feather="check" class="w-4 h-4 mr-1"></i> Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHtml;
+                        feather.replace();
+                    }, 2000);
+                });
+            }
+        });
+
+        speakBtn.addEventListener('click', () => {
+            const text = outputText.textContent;
+            if (text && text !== 'Transliterated text will appear here...') {
+                const utterance = new SpeechSynthesisUtterance(text);
+
+                // Set appropriate language based on target script
+                const langMap = {
+                    'itrans': 'en-IN',
+                    'devanagari': 'hi-IN',
+                    'bengali': 'bn-IN',
+                    'tamil': 'ta-IN',
+                    'telugu': 'te-IN',
+                    'kannada': 'kn-IN',
+                    'malayalam': 'ml-IN',
+                    'gujarati': 'gu-IN',
+                    'gurmukhi': 'pa-IN',
+                    'oriya': 'or-IN'
+                };
+
+                utterance.lang = langMap[targetScript.value] || 'en-US';
+                speechSynthesis.speak(utterance);
+            }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const text = outputText.textContent;
+            if (text && text !== 'Transliterated text will appear here...') {
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `transliterated-text-${new Date().getTime()}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Speech input
+        speechInputBtn.addEventListener('click', () => {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Speech recognition is not supported in this browser.');
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            // Set language based on source script
+            const langMap = {
+                'devanagari': 'hi-IN',
+                'bengali': 'bn-IN',
+                'tamil': 'ta-IN',
+                'telugu': 'te-IN',
+                'kannada': 'kn-IN',
+                'malayalam': 'ml-IN',
+                'gujarati': 'gu-IN',
+                'gurmukhi': 'pa-IN',
+                'oriya': 'or-IN',
+                'itrans': 'en-IN'
+            };
+
+            recognition.lang = langMap[sourceScript.value] || 'en-US';
+
+            recognition.onstart = () => {
+                speechInputBtn.innerHTML = '<i data-feather="mic-off" class="w-4 h-4 inline mr-1"></i> Listening...';
+                speechInputBtn.classList.add('text-red-600');
+                feather.replace();
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                inputText.value = transcript;
+                charCount.textContent = transcript.length;
+
+                // Auto-transliterate if text is long enough
+                if (transcript.length > 3) {
+                    transliterateBtn.click();
+                }
+            };
+
+            recognition.onend = () => {
+                speechInputBtn.innerHTML = '<i data-feather="mic" class="w-4 h-4 inline mr-1"></i> Speech Input';
+                speechInputBtn.classList.remove('text-red-600');
+                feather.replace();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                speechInputBtn.innerHTML = '<i data-feather="mic" class="w-4 h-4 inline mr-1"></i> Speech Input';
+                speechInputBtn.classList.remove('text-red-600');
+                feather.replace();
+
+                if (event.error === 'not-allowed') {
+                    alert('Microphone access is not allowed. Please enable microphone permissions in your browser settings.');
+                }
+            };
+
+            recognition.start();
+        });
+
+        // Camera mode switching
+        uploadModeBtn.addEventListener('click', () => {
+            uploadModeBtn.classList.add('bg-orange-600', 'text-white');
+            cameraModeBtn.classList.remove('bg-orange-600', 'text-white');
+            uploadModeBtn.classList.remove('bg-white', 'text-gray-900');
+            cameraModeBtn.classList.add('bg-white', 'text-gray-900');
+            uploadSection.classList.remove('hidden');
+            cameraSection.classList.add('hidden');
+            stopCamera();
+        });
+
+        cameraModeBtn.addEventListener('click', () => {
+            cameraModeBtn.classList.add('bg-orange-600', 'text-white');
+            uploadModeBtn.classList.remove('bg-orange-600', 'text-white');
+            cameraModeBtn.classList.remove('bg-white', 'text-gray-900');
+            uploadModeBtn.classList.add('bg-white', 'text-gray-900');
+            cameraSection.classList.remove('hidden');
+            uploadSection.classList.add('hidden');
+            initCamera();
+        });
+
+        // Image upload handling
+        ocrImageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        imagePreview.innerHTML = '';
+                        const displayImg = img.cloneNode();
+                        displayImg.style.maxWidth = '100%';
+                        displayImg.style.maxHeight = '300px';
+                        imagePreview.appendChild(displayImg);
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Camera initialization
+        async function initCamera() {
+            try {
+                stopCamera(); // Stop any existing stream
+
+                // Get available cameras
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                cameras = devices.filter(device => device.kind === 'videoinput');
+
+                if (cameras.length === 0) {
+                    alert('No camera found on this device.');
+                    return;
+                }
+
+                const constraints = {
+                    video: {
+                        deviceId: cameras[currentCameraIndex].deviceId ?
+                            { exact: cameras[currentCameraIndex].deviceId } : undefined,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraVideo.srcObject = currentStream;
+
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                alert('Could not access camera: ' + error.message);
+            }
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+                cameraVideo.srcObject = null;
+            }
+        }
+
+        // Switch camera
+        switchCameraBtn.addEventListener('click', () => {
+            if (cameras.length > 1) {
+                currentCameraIndex = (currentCameraIndex + 1) % cameras.length;
+                initCamera();
+            }
+        });
+
+        // Capture image
+        captureBtn.addEventListener('click', () => {
+            const context = captureCanvas.getContext('2d');
+            captureCanvas.width = cameraVideo.videoWidth;
+            captureCanvas.height = cameraVideo.videoHeight;
+            context.drawImage(cameraVideo, 0, 0, captureCanvas.width, captureCanvas.height);
+
+            // Display the captured image
+            const dataUrl = captureCanvas.toDataURL('image/png');
+            imagePreview.innerHTML = '';
+            const img = new Image();
+            img.src = dataUrl;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '300px';
+            imagePreview.appendChild(img);
+
+            // Stop camera after capture
+            stopCamera();
+        });
+
+        // OCR processing
+        ocrProcessBtn.addEventListener('click', async () => {
+            let imageSrc;
+
+            // Get image from either upload or camera
+            if (uploadSection.classList.contains('hidden')) {
+                // Camera mode
+                if (captureCanvas.width === 0) {
+                    alert('Please capture an image first.');
+                    return;
+                }
+                imageSrc = captureCanvas.toDataURL('image/png');
+            } else {
+                // Upload mode
+                if (!ocrImageUpload.files[0]) {
+                    alert('Please upload an image first.');
+                    return;
+                }
+                const file = ocrImageUpload.files[0];
+                imageSrc = await readFileAsDataURL(file);
+            }
+
+            // Get selected language
+            const lang = ocrLanguage.value;
+
+            // Show progress
+            ocrProgress.classList.remove('hidden');
+            ocrLoader.classList.remove('hidden');
+            ocrBtnText.textContent = 'Processing...';
+            ocrProcessBtn.disabled = true;
+
+            try {
+                const result = await performOCR(imageSrc, lang);
+                displayOCRResult(result);
+            } catch (error) {
+                console.error('OCR Error:', error);
+                ocrExtractedText.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+            } finally {
+                ocrLoader.classList.add('hidden');
+                ocrBtnText.textContent = 'Extract Text';
+                ocrProcessBtn.disabled = false;
+            }
+        });
+
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function performOCR(imageData, lang) {
+            return new Promise((resolve, reject) => {
+                Tesseract.recognize(
+                    imageData,
+                    lang === 'auto' ? 'eng+hin+ben+tam+tel+kan+mal+guj+pan+ori' : lang,
+                    {
+                        logger: progress => {
+                            if (progress.status === 'recognizing text') {
+                                const progressPct = Math.round(progress.progress * 100);
+                                ocrProgressBar.style.width = `${progressPct}%`;
+                                ocrProgressPercentage.textContent = `${progressPct}%`;
+                                ocrProgressStatus.textContent = 'Recognizing text...';
+                            } else {
+                                ocrProgressStatus.textContent = progress.status;
+                            }
+                        }
+                    }
+                ).then(result => {
+                    resolve(result);
+                }).catch(error => {
+                    reject(error);
+                });
+            });
+        }
+
+        function displayOCRResult(result) {
+            // Hide progress bar
+            ocrProgress.classList.add('hidden');
+
+            // Show detected language if auto-detection was used
+            if (ocrLanguage.value === 'auto' && result.data.language) {
+                detectedLanguage.textContent = `Detected: ${result.data.language}`;
+                detectedLanguage.classList.remove('hidden');
+            }
+
+            // Display the text with confidence indicators
+            let html = '';
+
+            if (result.data.words && result.data.words.length > 0) {
+                result.data.words.forEach(word => {
+                    const confidence = word.confidence;
+                    let accuracyClass = 'low-accuracy';
+
+                    if (confidence > 85) accuracyClass = 'high-accuracy';
+                    else if (confidence > 70) accuracyClass = 'medium-accuracy';
+
+                    html += `
+                        <span class="word-box" data-word="${word.text}" data-confidence="${confidence}">
+                            ${word.text}
+                            <span class="accuracy-indicator ${accuracyClass}">${Math.round(confidence)}%</span>
+                        </span>
+                    `;
+                });
+            } else {
+                html = '<p class="text-gray-400 italic">No text could be detected in the image.</p>';
+            }
+
+            ocrExtractedText.innerHTML = html;
+
+            // Add click handlers for word selection
+            document.querySelectorAll('.word-box').forEach(box => {
+                box.addEventListener('click', () => {
+                    if (isTextSelectionMode) {
+                        box.classList.toggle('selected');
+                        const word = box.getAttribute('data-word');
+                        if (box.classList.contains('selected')) {
+                            selectedWords.add(word);
+                        } else {
+                            selectedWords.delete(word);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Text selection mode
+        ocrSelectTextBtn.addEventListener('click', () => {
+            isTextSelectionMode = true;
+            ocrExtractedText.classList.add('text-selection-mode');
+            ocrSelectTextBtn.classList.add('hidden');
+            ocrClearSelectionBtn.classList.remove('hidden');
+        });
+
+        ocrClearSelectionBtn.addEventListener('click', () => {
+            isTextSelectionMode = false;
+            selectedWords.clear();
+            ocrExtractedText.classList.remove('text-selection-mode');
+            ocrSelectTextBtn.classList.remove('hidden');
+            ocrClearSelectionBtn.classList.add('hidden');
+            document.querySelectorAll('.word-box.selected').forEach(box => {
+                box.classList.remove('selected');
+            });
+        });
+
+        // Copy OCR text
+        ocrCopyBtn.addEventListener('click', () => {
+            let textToCopy;
+
+            if (isTextSelectionMode && selectedWords.size > 0) {
+                textToCopy = Array.from(selectedWords).join(' ');
+            } else {
+                textToCopy = Array.from(ocrExtractedText.querySelectorAll('.word-box'))
+                    .map(box => box.getAttribute('data-word'))
+                    .join(' ');
+            }
+
+            if (textToCopy.trim()) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalHtml = ocrCopyBtn.innerHTML;
+                    ocrCopyBtn.innerHTML = '<i data-feather="check" class="w-3 h-3 inline mr-1"></i> Copied!';
+                    setTimeout(() => {
+                        ocrCopyBtn.innerHTML = originalHtml;
+                        feather.replace();
+                    }, 2000);
+                });
+            }
+        });
+
+        // Use OCR text for transliteration
+        ocrUseBtn.addEventListener('click', () => {
+            let textToUse;
+
+            if (isTextSelectionMode && selectedWords.size > 0) {
+                textToUse = Array.from(selectedWords).join(' ');
+            } else {
+                textToUse = Array.from(ocrExtractedText.querySelectorAll('.word-box'))
+                    .map(box => box.getAttribute('data-word'))
+                    .join(' ');
+            }
+
+            if (textToUse.trim()) {
+                inputText.value = textToUse;
+                charCount.textContent = textToUse.length;
+
+                // Switch to text tab and trigger transliteration
+                textTab.click();
+                setTimeout(() => transliterateBtn.click(), 100);
+            }
+        });
+
+        // Clear OCR
+        ocrCancelBtn.addEventListener('click', () => {
+            imagePreview.innerHTML = '<p class="text-gray-400 italic">Image preview will appear here...</p>';
+            ocrExtractedText.innerHTML = '<p class="text-gray-400 italic">Extracted text will appear here...</p>';
+            ocrImageUpload.value = '';
+            detectedLanguage.classList.add('hidden');
+            stopCamera();
+
+            // Reset camera section if needed
+            if (!cameraSection.classList.contains('hidden')) {
+                initCamera();
+            }
+        });
+
+        // Initialize
+        updateScriptInfo();
+        feather.replace();
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+            if (recognition) {
+                recognition.stop();
+            }
+        });
+    </script>
+</body>
+
+</html>

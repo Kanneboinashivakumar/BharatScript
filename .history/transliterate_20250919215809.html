@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Transliteration Tool | Bharat Script</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@indic-transliteration/sanscript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F9FAFB, #E5E7EB);
+        }
+
+        .btn-gradient {
+            background: linear-gradient(90deg, #F97316, #10B981);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F97316;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #F97316;
+            color: #F97316;
+            font-weight: 600;
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+        }
+
+        .language-option span {
+            margin-left: 8px;
+        }
+
+        /* Camera and OCR enhancements */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        #camera-video {
+            width: 100%;
+            border-radius: 8px;
+            background-color: #000;
+        }
+
+        .camera-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .camera-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .camera-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+
+        .ocr-selection-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            border: 2px dashed #F97316;
+            background-color: rgba(249, 115, 22, 0.1);
+            pointer-events: none;
+            display: none;
+        }
+
+        .text-selection-mode .ocr-selection-overlay {
+            pointer-events: all;
+            cursor: crosshair;
+        }
+
+        .enhanced-ocr-result {
+            position: relative;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            background-color: #f9fafb;
+            min-height: 200px;
+        }
+
+        .word-box {
+            display: inline-block;
+            padding: 2px 4px;
+            margin: 1px;
+            border-radius: 3px;
+            background-color: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .word-box:hover {
+            background-color: rgba(249, 115, 22, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .word-box.selected {
+            background-color: rgba(249, 115, 22, 0.3);
+            border: 1px solid #F97316;
+        }
+
+        .ocr-action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        .accuracy-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .high-accuracy {
+            background-color: #10B981;
+            color: white;
+        }
+
+        .medium-accuracy {
+            background-color: #F59E0B;
+            color: white;
+        }
+
+        .low-accuracy {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .ocr-word-confidence {
+            font-size: 0.7rem;
+            color: #6B7280;
+            display: block;
+        }
+
+        .pronunciation-hint {
+            font-size: 0.8rem;
+            color: #6B7280;
+            font-style: italic;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white bg-opacity-90 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-gray-800">BharatScript</span>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-center space-x-4">
+                        <a href="index.html"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-900 bg-gray-100">Transliterate</a>
+                        <a href="#"
+                            class="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50">About</a>
+                    </div>
+                </div>
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none">
+                        <i data-feather="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="text-center mb-8" data-aos="fade-up">
+            <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+                <span class="gradient-text">Advanced Script Transliterator</span>
+            </h1>
+            <p class="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
+                Convert text between different Indian scripts with high accuracy and pronunciation guidance
+            </p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-8" data-aos="fade-up" data-aos-delay="100">
+            <nav class="-mb-px flex space-x-8">
+                <a href="#" id="text-tab" class="tab-active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Text Input
+                </a>
+                <a href="#" id="image-tab"
+                    class="text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
+                    Image OCR
+                </a>
+            </nav>
+        </div>
+
+        <!-- Transliteration Tool -->
+        <div id="text-input-section" class="bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up"
+            data-aos-delay="200">
+            <div class="p-6">
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Input Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Input</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Source:</label>
+                                <select id="source-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                    <option value="gujarati">Gujarati</option>
+                                    <option value="gurmukhi">Punjabi (Gurmukhi)</option>
+                                    <option value="oriya">Odia</option>
+                                    <option value="itrans">Latin (ITRANS)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <textarea id="input-text" rows="12"
+                            class="shadow-sm focus:ring-orange-500 focus:border-orange-500 block w-full sm:text-sm border border-gray-300 rounded-md p-3"
+                            placeholder="Type or paste your text here..."></textarea>
+                        <div class="mt-2 flex justify-between">
+                            <div class="flex items-center">
+                                <span class="text-xs text-gray-500">Characters: <span id="char-count">0</span></span>
+                            </div>
+                            <button id="speech-input-btn" class="text-sm text-orange-600 hover:text-orange-800">
+                                <i data-feather="mic" class="w-4 h-4 inline mr-1"></i> Speech Input
+                            </button>
+                        </div>
+                        <div id="pronunciation-hints" class="mt-2 hidden">
+                            <p class="text-xs text-gray-500">Pronunciation hints will appear here as you type</p>
+                        </div>
+                    </div>
+
+                    <!-- Output Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Output</h3>
+                            <div class="flex items-center">
+                                <label class="mr-2 text-sm font-medium text-gray-700">Target:</label>
+                                <select id="target-script"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-sm">
+                                    <option value="itrans">English (Latin)</option>
+                                    <option value="devanagari">Hindi (Devanagari)</option>
+                                    <option value="bengali">Bengali</option>
+                                    <option value="tamil">Tamil</option>
+                                    <option value="telugu">Telugu</option>
+                                    <option value="kannada">Kannada</option>
+                                    <option value="malayalam">Malayalam</option>
+                                    <option value="gujarati">Gujarati</option>
+                                    <option value="gurmukhi">Punjabi (Gurmukhi)</option>
+                                    <option value="oriya">Odia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="output-text"
+                            class="shadow-sm block w-full sm:text-sm border border-gray-300 rounded-md p-3 bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Transliterated text will appear here...</p>
+                        </div>
+                        <div id="output-pronunciation" class="mt-2 hidden">
+                            <p class="text-xs text-gray-500">Pronunciation guide will appear here</p>
+                        </div>
+                        <div class="mt-2 flex justify-end space-x-3">
+                            <button id="copy-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="copy" class="w-4 h-4 mr-1"></i> Copy
+                            </button>
+                            <button id="speak-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="volume-2" class="w-4 h-4 mr-1"></i> Speak
+                            </button>
+                            <button id="download-btn"
+                                class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                <i data-feather="download" class="w-4 h-4 mr-1"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mt-6 flex justify-center">
+                    <button id="transliterate-btn"
+                        class="btn-gradient text-white px-8 py-3 rounded-md text-lg font-medium inline-flex items-center">
+                        <i data-feather="repeat" class="w-5 h-5 mr-2"></i> Transliterate
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image OCR Section (Hidden by default) -->
+        <div id="image-ocr-section" class="bg-white shadow rounded-lg overflow-hidden mt-8 hidden" data-aos="fade-up">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Image with Text</h3>
+
+                <!-- Camera Mode Toggle -->
+                <div class="flex justify-center mb-4">
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <button id="upload-mode-btn" type="button"
+                            class="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-orange-600 rounded-l-lg hover:bg-orange-700 focus:z-10 focus:ring-2 focus:ring-orange-500">
+                            <i data-feather="upload" class="w-4 h-4 inline mr-1"></i> Upload
+                        </button>
+                        <button id="camera-mode-btn" type="button"
+                            class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-r-md hover:bg-gray-100 hover:text-orange-700 focus:z-10 focus:ring-2 focus:ring-orange-500">
+                            <i data-feather="camera" class="w-4 h-4 inline mr-1"></i> Camera
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Upload Section -->
+                <div id="upload-section">
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <div class="flex justify-center">
+                            <i data-feather="image" class="w-12 w-12 text-gray-400"></i>
+                        </div>
+                        <div class="mt-4 flex text-sm text-gray-600">
+                            <label
+                                class="file-upload relative cursor-pointer bg-white rounded-md font-medium text-orange-600 hover:text-orange-500 focus-within:outline-none">
+                                <span>Upload an image file</span>
+                                <input type="file" id="ocr-image-upload" class="file-upload-input" accept="image/*">
+                            </label>
+                            <p class="pl-1">or drag and drop</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">
+                            PNG, JPG, GIF up to 10MB
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Camera Section -->
+                <div id="camera-section" class="hidden">
+                    <div class="camera-container">
+                        <video id="camera-video" autoplay playsinline></video>
+                        <div class="camera-controls">
+                            <button id="capture-btn" class="camera-btn">
+                                <i data-feather="camera" class="text-gray-800"></i>
+                            </button>
+                            <button id="switch-camera-btn" class="camera-btn">
+                                <i data-feather="refresh-cw" class="text-gray-800"></i>
+                            </button>
+                        </div>
+                        <div class="ocr-selection-overlay"></div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <canvas id="capture-canvas" class="hidden"></canvas>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <!-- Original Image Preview -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Original Image</h4>
+                        <div id="image-preview"
+                            class="border border-gray-200 rounded-md p-4 flex items-center justify-center bg-gray-50 min-h-[200px]">
+                            <p class="text-gray-400 italic">Image preview will appear here...</p>
+                        </div>
+                    </div>
+
+                    <!-- Extracted Text -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-sm font-medium text-gray-700">Extracted Text</h4>
+                            <div class="flex items-center">
+                                <span id="detected-language" class="text-xs text-gray-500 mr-2 hidden">Detected: </span>
+                                <label class="mr-2 text-xs font-medium text-gray-700">Language:</label>
+                                <select id="ocr-language"
+                                    class="border-gray-300 focus:border-orange-500 focus:ring-orange-500 rounded-md shadow-sm text-xs">
+                                    <option value="auto">Auto Detect</option>
+                                    <option value="eng">English</option>
+                                    <option value="hin">Hindi</option>
+                                    <option value="ben">Bengali</option>
+                                    <option value="tam">Tamil</option>
+                                    <option value="tel">Telugu</option>
+                                    <option value="kan">Kannada</option>
+                                    <option value="mal">Malayalam</option>
+                                    <option value="guj">Gujarati</option>
+                                    <option value="pan">Punjabi</option>
+                                    <option value="ori">Odia</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="ocr-extracted-text" class="enhanced-ocr-result">
+                            <p class="text-gray-400 italic">Extracted text will appear here...</p>
+                        </div>
+                        <div class="ocr-action-bar">
+                            <div>
+                                <button id="ocr-select-text-btn"
+                                    class="text-xs text-orange-600 hover:text-orange-800 mr-3">
+                                    <i data-feather="edit" class="w-3 h-3 inline mr-1"></i> Select Text
+                                </button>
+                                <button id="ocr-clear-selection-btn"
+                                    class="text-xs text-gray-600 hover:text-gray-800 hidden">
+                                    <i data-feather="x" class="w-3 h-3 inline mr-1"></i> Clear Selection
+                                </button>
+                            </div>
+                            <div>
+                                <button id="ocr-copy-btn" class="text-xs text-orange-600 hover:text-orange-800 mr-3">
+                                    <i data-feather="copy" class="w-3 h-3 inline mr-1"></i> Copy Text
+                                </button>
+                                <button id="ocr-use-btn" class="text-xs text-orange-600 hover:text-orange-800">
+                                    <i data-feather="arrow-right" class="w-3 h-3 inline mr-1"></i> Use for
+                                    Transliteration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OCR Processing Controls -->
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button id="ocr-cancel-btn"
+                        class="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                        Clear
+                    </button>
+                    <button id="ocr-process-btn"
+                        class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none">
+                        <div class="flex items-center">
+                            <span id="ocr-btn-text">Extract Text</span>
+                            <div id="ocr-loader" class="loader hidden ml-2"></div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- OCR Progress -->
+                <div id="ocr-progress" class="mt-4 hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="ocr-progress-bar" class="bg-orange-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span id="ocr-progress-status">Initializing...</span>
+                        <span id="ocr-progress-percentage">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script Information -->
+        <div class="mt-8 bg-white shadow rounded-lg overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+            <div class="p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">About Indian Scripts</h3>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Source Script: <span
+                                id="source-script-name">Devanagari</span></h4>
+                        <p class="text-sm text-gray-500">
+                            Devanagari is an abugida alphabet of India and Nepal. It is written from left to right, has
+                            a strong preference for symmetrical rounded shapes within squared outlines, and is
+                            recognizable by a horizontal line that runs along the top of full letters.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-2">Target Script: <span
+                                id="target-script-name">Latin (English)</span></h4>
+                        <p class="text-sm text-gray-500">
+                            The Latin script is the basis of the international phonetic alphabet. Our transliteration
+                            follows standard academic conventions for representing Indian scripts in Latin characters,
+                            preserving pronunciation as closely as possible.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 mt-12">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                    <div class="flex items-center">
+                        <i data-feather="globe" class="h-8 w-8 text-orange-500"></i>
+                        <span class="ml-2 text-xl font-bold text-white">BharatScript</span>
+                    </div>
+                    <p class="text-gray-300 text-base">
+                        Making Indian scripts accessible to everyone through technology.
+                    </p>
+                </div>
+                <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Navigation
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="index.html" class="text-base text-gray-400 hover:text-white">
+                                        Home
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Transliteration Tool
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        About
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="mt-12 md:mt-0">
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Support
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Documentation
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        Contact
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Acknowledgments
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        AICTE
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-base text-gray-400 hover:text-white">
+                                        IKS
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="md:grid md:grid-cols-2 md:gap-8">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">
+                                Technology
+                            </h3>
+                            <ul class="mt-4 space-y-4">
+                                <li>
+                                    <span class="text-base text-gray-400">Sanscript.js</span>
+                                </li>
+                                <li>
+                                    <span class="text-base text-gray-400">Tesseract.js</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 border-t border-gray-700 pt-8">
+                <p class="text-base text-gray-400 text-center">
+                    &copy; 2023 Bharat Script Transliterator. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        feather.replace();
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true
+        });
+
+        // Enhanced transliteration mappings for better accuracy
+        const enhancedTransliterationMaps = {
+            'tamil-itrans': {
+                'க்': 'k', 'க': 'ka', 'கா': 'kā', 'கி': 'ki', 'கீ': 'kī', 'கு': 'ku', 'கூ': 'kū', 'கெ': 'ke', 'கே': 'kē', 'கை': 'kai', 'கொ': 'ko', 'கோ': 'kō', 'கௌ': 'kau',
+                'ங்': 'ṅ', 'ங': 'ṅa', 'ஙா': 'ṅā', 'ஙி': 'ṅi', 'ஙீ': 'ṅī', 'ஙு': 'ṅu', 'ஙூ': 'ṅū', 'ஙெ': 'ṅe', 'ஙே': 'ṅē', 'ஙை': 'ṅai', 'ஙொ': 'ṅo', 'ஙோ': 'ṅō', 'ஙௌ': 'ṅau',
+                'ச்': 'c', 'ச': 'ca', 'சா': 'cā', 'சி': 'ci', 'சீ': 'cī', 'சு': 'cu', 'சூ': 'cū', 'செ': 'ce', 'சே': 'cē', 'சை': 'cai', 'சொ': 'co', 'சோ': 'cō', 'சௌ': 'cau',
+                'ஞ்': 'ñ', 'ஞ': 'ña', 'ஞா': 'ñā', 'ஞி': 'ñi', 'ஞீ': 'ñī', 'ஞு': 'ñu', 'ஞூ': 'ñū', 'ஞெ': 'ñe', 'ஞே': 'ñē', 'ஞை': 'ñai', 'ஞொ': 'ño', 'ஞோ': 'ñō', 'ஞௌ': 'ñau',
+                'ட்': 'ṭ', 'ட': 'ṭa', 'டா': 'ṭā', 'டி': 'ṭi', 'டீ': 'ṭī', 'டு': 'ṭu', 'டூ': 'ṭū', 'டெ': 'ṭe', 'டே': 'ṭē', 'டை': 'ṭai', 'டொ': 'ṭo', 'டோ': 'ṭō', 'டௌ': 'ṭau',
+                'ண்': 'ṇ', 'ண': 'ṇa', 'ணா': 'ṇā', 'ணி': 'ṇi', 'ணீ': 'ṇī', 'ணு': 'ṇu', 'ணூ': 'ṇū', 'ணெ': 'ṇe', 'ணே': 'ṇē', 'ணை': 'ṇai', 'ணொ': 'ṇo', 'ணோ': 'ṇō', 'ணௌ': 'ṇau',
+                'த்': 't', 'த': 'ta', 'தா': 'tā', 'தி': 'ti', 'தீ': 'tī', 'து': 'tu', 'தூ': 'tū', 'தெ': 'te', 'தே': 'tē', 'தை': 'tai', 'தொ': 'to', 'தோ': 'tō', 'தௌ': 'tau',
+                'ந்': 'n', 'ந': 'na', 'நா': 'nā', 'நி': 'ni', 'நீ': 'nī', 'நு': 'nu', 'நூ': 'nū', 'நெ': 'ne', 'நே': 'nē', 'நை': 'nai', 'நொ': 'no', 'நோ': 'nō', 'நௌ': 'nau',
+                'ப்': 'p', 'ப': 'pa', 'பா': 'pā', 'பி': 'pi', 'பீ': 'pī', 'பு': 'pu', 'பூ': 'pū', 'பெ': 'pe', 'பே': 'pē', 'பை': 'pai', 'பொ': 'po', 'போ': 'pō', 'பௌ': 'pau',
+                'ம்': 'm', 'ம': 'ma', 'மா': 'mā', 'மி': 'mi', 'மீ': 'mī', 'மு': 'mu', 'மூ': 'mū', 'மெ': 'me', 'மே': 'mē', 'மை': 'mai', 'மொ': 'mo', 'மோ': 'mō', 'மௌ': 'mau',
+                'ய்': 'y', 'ய': 'ya', 'யா': 'yā', 'யி': 'yi', 'யீ': 'yī', 'யு': 'yu', 'யூ': 'yū', 'யெ': 'ye', 'யே': 'yē', 'யை': 'yai', 'யொ': 'yo', 'யோ': 'yō', 'யௌ': 'yau',
+                'ர்': 'r', 'ர': 'ra', 'ரா': 'rā', 'ரி': 'ri', 'ரீ': 'rī', 'ரு': 'ru', 'ரூ': 'rū', 'ரெ': 're', 'ரே': 'rē', 'ரை': 'rai', 'ரொ': 'ro', 'ரோ': 'rō', 'ரௌ': 'rau',
+                'ல்': 'l', 'ல': 'la', 'லா': 'lā', 'லி': 'li', 'லீ': 'lī', 'லு': 'lu', 'லூ': 'lū', 'லெ': 'le', 'லே': 'lē', 'லை': 'lai', 'லொ': 'lo', 'லோ': 'lō', 'லௌ': 'lau',
+                'வ்': 'v', 'வ': 'va', 'வா': 'vā', 'வி': 'vi', 'வீ': 'vī', 'வு': 'vu', 'வூ': 'vū', 'வெ': 've', 'வே': 'vē', 'வை': 'vai', 'வொ': 'vo', 'வோ': 'vō', 'வௌ': 'vau',
+                'ழ்': 'ḻ', 'ழ': 'ḻa', 'ழா': 'ḻā', 'ழி': 'ḻi', 'ழீ': 'ḻī', 'ழு': 'ḻu', 'ழூ': 'ḻū', 'ழெ': 'ḻe', 'ழே': 'ḻē', 'ழை': 'ḻai', 'ழொ': 'ḻo', 'ழோ': 'ḻō', 'ழௌ': 'ḻau',
+                'ள்': 'ḷ', 'ள': 'ḷa', 'ளா': '
