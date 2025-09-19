@@ -1,0 +1,12 @@
+# VS Code settings
+.vscode/
+
+# Local history (like from VS Code or extensions)
+.history/
+
+# Lighthouse or other temp folders
+.lh/
+
+# OS files
+.DS_Store
+Thumbs.db
